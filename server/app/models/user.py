@@ -38,3 +38,4 @@ class User(Base):
     # One-to-One relationship (User can be a Doctor)
     # uselist=False ensures we get a single object, not a list
     doctor = relationship("Doctor", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    appointments = relationship("Appointment", back_populates="patient")

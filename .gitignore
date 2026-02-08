@@ -1,0 +1,24 @@
+# Environments
+venv/
+env/
+ENV/
+
+# Secrets and Config
+.env
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database
+*.sqlite3
+*.db
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Alembic (Optional)
+# Usually, you keep the 'alembic' folder, but you might ignore 
+# temporary logs if they appear.

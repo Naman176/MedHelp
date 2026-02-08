@@ -1,0 +1,25 @@
+# Web Framework & Server
+fastapi
+uvicorn[standard]
+
+# Database & ORM
+sqlalchemy
+asyncpg
+psycopg2-binary
+greenlet
+alembic
+
+# Configuration
+python-dotenv
+pydantic-settings
+
+# Authentication & Security
+passlib[bcrypt]
+bcrypt==4.0.1
+python-jose[cryptography]
+python-multipart
+
+# Validation
+email-validator
+pydantic[email]
+cloudinary

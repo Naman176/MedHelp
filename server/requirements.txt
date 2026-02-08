@@ -11,7 +11,7 @@ alembic
 
 # Configuration
 python-dotenv
-pydantic-settings
+pydantic_settings
 
 # Authentication & Security
 passlib[bcrypt]

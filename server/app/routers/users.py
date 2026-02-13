@@ -29,3 +29,5 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
     Validates the token, retrieves the user from the database, and returns the user's information.
     """
     return current_user
+
+# Update profile, logout

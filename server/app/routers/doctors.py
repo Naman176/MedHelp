@@ -14,6 +14,8 @@ from app.schemas.doctor import AvailabilityCreate
 
 router = APIRouter()
 
+# verification from admin left
+# apply wala test karna hai becoiz cloudinary was added
 @router.post("/apply", status_code=status.HTTP_201_CREATED)
 async def apply_for_doctor(
     # We use Form(...) because we are sending a file along with text

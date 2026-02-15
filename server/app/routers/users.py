@@ -9,7 +9,7 @@ from app.dependencies import get_current_user
 router = APIRouter()
 
 # This endpoint allows users to register with email and password, or via Google (if password is not provided)
-@router.post("/", response_model=UserResponse)
+@router.post("/register", response_model=UserResponse)
 async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     """
     Register a new user.

@@ -10,10 +10,10 @@ class Appointment(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     
     # Who is the Patient? (Links to Users table)
-    patient_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    patient_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Who is the Doctor? (Links to Doctors table)
-    doctor_id = Column(UUID(as_uuid=True), ForeignKey("doctors.id"), nullable=False)
+    doctor_id = Column(UUID(as_uuid=True), ForeignKey("doctors.id", ondelete="CASCADE"), nullable=False)
     
     # When?
     appointment_date = Column(Date, nullable=False)  # YYYY-MM-DD

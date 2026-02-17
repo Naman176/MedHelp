@@ -8,7 +8,7 @@ class DoctorAvailability(Base):
     __tablename__ = "doctor_availabilities"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    doctor_id = Column(UUID(as_uuid=True), ForeignKey("doctors.id"), nullable=False)
+    doctor_id = Column(UUID(as_uuid=True), ForeignKey("doctors.id", ondelete="CASCADE"), nullable=False)
     
     # We will store days as "Monday", "Tuesday", etc.
     days_of_week = Column(String, nullable=False) 

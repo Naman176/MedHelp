@@ -4,6 +4,7 @@ from sqlalchemy import select, and_, update, or_, desc
 from datetime import datetime
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.dependencies import get_current_user
@@ -24,16 +25,48 @@ async def book_appointment(
     db: AsyncSession = Depends(get_db)
 ):
     
-    # 1. Clean the time (remove milliseconds)
+    # Clean the time (remove milliseconds)
     clean_time = booking_data.appointment_time.replace(tzinfo=None, microsecond=0)
 
-    # 1. Check if Doctor exists
-    query_doctor = await db.execute(select(Doctor).where(Doctor.id == booking_data.doctor_id))
+    now = datetime.now()
+    current_date = now.date()
+    current_time = now.time()
+
+    # Check if the date is in the past
+    if booking_data.appointment_date < current_date:
+        raise HTTPException(
+            status_code=400, 
+            detail="You cannot book an appointment on a past date."
+        )
+        
+    # Check if the date is today, but the time has already passed
+    if booking_data.appointment_date == current_date and clean_time < current_time:
+        raise HTTPException(
+            status_code=400, 
+            detail="You cannot book an appointment in the past."
+        )
+
+    # Check if Doctor exists
+    query_doctor = await db.execute(select(Doctor).where(Doctor.id == booking_data.doctor_id).options(selectinload(Doctor.user)))
     doctor = query_doctor.scalars().first()
+
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")
+    
+    if doctor.user_id == current_user.id:
+        raise HTTPException(
+            status_code=400, 
+            detail="You cannot book an appointment with yourself."
+        )
+    
+    # Block booking if the doctor is pending approval
+    if not doctor.user.is_verified:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot book appointments. This doctor's profile is not verified yet."
+        )
 
-    # 2. Check if Doctor works on this day (e.g., "Monday")
+    # Check if Doctor works on this day (e.g., "Monday")
     # Convert date (2023-10-27) to day name ("Friday")
     day_name = booking_data.appointment_date.strftime("%A")
     
@@ -51,14 +84,14 @@ async def book_appointment(
             detail=f"Doctor is not available on {day_name}s"
         )
 
-    # 3. Check Time Range (Is 10:00 within 09:00 - 17:00?)
+    # Check Time Range (Is 10:00 within 09:00 - 17:00?)
     if not (availability.start_time <= booking_data.appointment_time < availability.end_time):
         raise HTTPException(
             status_code=400, 
             detail=f"Doctor is only available between {availability.start_time} and {availability.end_time}"
         )
 
-    # 4. Check for Double Booking (Is someone else already booked?)
+    # Check for Double Booking (Is someone else already booked?)
     query_conflict = await db.execute(
         select(Appointment).where(
             and_(
@@ -72,7 +105,7 @@ async def book_appointment(
     if query_conflict.scalars().first():
         raise HTTPException(status_code=409, detail="This time slot is already booked.")
 
-    # 5. Create the Appointment
+    # Create the Appointment
     new_appointment = Appointment(
         patient_id=current_user.id,
         doctor_id=doctor.id,
@@ -98,7 +131,7 @@ async def get_my_appointments(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # --- STEP 1: AUTO-UPDATE PAST APPOINTMENTS ---
+    # AUTO-UPDATE PAST APPOINTMENTS
     now = datetime.now()
     today_date = now.date()
     current_time = now.time()
@@ -119,9 +152,9 @@ async def get_my_appointments(
     )
     await db.commit()
 
-    # --- STEP 2: FETCH THE LIST ---
+    # FETCH THE LIST
 
-    # A) DOCTOR LOGIC
+    # DOCTOR LOGIC
     if current_user.role == "doctor":
         query_doctor = await db.execute(select(Doctor).where(Doctor.user_id == current_user.id))
         doctor = query_doctor.scalars().first()
@@ -136,7 +169,7 @@ async def get_my_appointments(
         )
         return query.scalars().all()
 
-    # B) ADMIN LOGIC
+    # ADMIN LOGIC
     elif current_user.role == "admin":
          query = await db.execute(
             select(Appointment)
@@ -144,7 +177,7 @@ async def get_my_appointments(
         )
          return query.scalars().all()
 
-    # C) PATIENT LOGIC (The Default for everyone else)
+    # PATIENT LOGIC (The Default for everyone else)
     # This catches role="patient", role="user", or any other normal user
     else:
         query = await db.execute(
@@ -154,6 +187,7 @@ async def get_my_appointments(
         )
         return query.scalars().all()
     
+
 @router.put("/{appointment_id}/status", response_model=AppointmentResponse)
 async def update_appointment_status(
     appointment_id: UUID,
@@ -161,21 +195,21 @@ async def update_appointment_status(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # 1. Fetch the Appointment
+    # Fetch the Appointment
     query = await db.execute(select(Appointment).where(Appointment.id == appointment_id))
     appointment = query.scalars().first()
     
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
-    # --- SCENARIO A: The User is the PATIENT ---
+    # The User is the PATIENT
     if appointment.patient_id == current_user.id:
         
-        # Rule 1: Patients can ONLY cancel.
+        # Patients can ONLY cancel
         if update_data.status != "CANCELLED":
             raise HTTPException(status_code=400, detail="Patients can only cancel appointments.")
 
-        # Rule 2: Patients can ONLY cancel if it is currently PENDING.
+        # Patients can ONLY cancel if it is currently PENDING.
         # Once the doctor touches it (Confirmed/Rejected/Completed), the patient is locked out.
         if appointment.status != "PENDING":
              raise HTTPException(
@@ -183,7 +217,7 @@ async def update_appointment_status(
                 detail="Cannot cancel. This appointment has already been processed by the doctor."
             )
 
-    # --- SCENARIO B: The User is the DOCTOR ---
+    # The User is the DOCTOR
     else:
         # Verify this user is actually the doctor for this specific appointment
         query_doc = await db.execute(select(Doctor).where(Doctor.user_id == current_user.id))
@@ -193,11 +227,11 @@ async def update_appointment_status(
         if not doctor_record or appointment.doctor_id != doctor_record.id:
             raise HTTPException(status_code=403, detail="You are not authorized to modify this appointment.")
             
-        # --- DOCTOR LOGIC STARTS HERE ---
+        # DOCTOR LOGIC STARTS HERE
         current_status = appointment.status
         new_status = update_data.status
 
-        # Rule 3: Dead Ends. 
+        # Dead Ends. 
         # If it's already REJECTED, COMPLETED, or CANCELLED, nobody can change it.
         if current_status in ["REJECTED", "COMPLETED", "CANCELLED"]:
              raise HTTPException(
@@ -205,7 +239,7 @@ async def update_appointment_status(
                 detail=f"This appointment is already {current_status} and cannot be changed."
             )
 
-        # Rule 4: Valid Transitions Only
+        # Valid Transitions Only
         # PENDING   -> CONFIRMED  (Accept)
         # PENDING   -> REJECTED   (Reject)
         # CONFIRMED -> COMPLETED  (Finish)
@@ -223,11 +257,11 @@ async def update_appointment_status(
                 detail=f"Invalid move. You cannot go from {current_status} to {new_status}."
             )
 
-        # Rule 5: Generate Link if Confirming Virtual
+        # Generate Link if Confirming Virtual
         if new_status == "CONFIRMED" and appointment.appointment_type == "VIRTUAL":
             appointment.meeting_link = f"https://meet.google.com/med-help-{appointment.id}"
 
-    # --- FINAL: Apply Update ---
+    # Apply Update
     appointment.status = update_data.status
     
     await db.commit()

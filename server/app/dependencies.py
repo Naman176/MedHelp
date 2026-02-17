@@ -22,7 +22,7 @@ async def get_current_user(
     )
     
     try:
-        # 1. Decode the Token
+        # Decode the Token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
@@ -31,9 +31,20 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
     
-    # 2. Check if user exists in DB
+    # Check if user exists in DB
     user = await get_user_by_email(db, email=email)
     if user is None:
         raise credentials_exception
         
     return user
+
+def verify_admin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Dependency to ensure the current user has the 'admin' role.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Access denied. Admin privileges required."
+        )
+    return current_user

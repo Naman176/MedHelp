@@ -10,7 +10,7 @@ class Doctor(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     
     # Link to the User table (One-to-One)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     
     # Professional Details
     specialization = Column(String, index=True, nullable=False)  # e.g., "Cardiologist"
@@ -26,4 +26,4 @@ class Doctor(Base):
     # Relationship to User
     user = relationship("User", back_populates="doctor")
     availabilities = relationship("DoctorAvailability", back_populates="doctor", cascade="all, delete-orphan")
-    appointments = relationship("Appointment", back_populates="doctor")
+    appointments = relationship("Appointment", back_populates="doctor", cascade="all, delete-orphan")

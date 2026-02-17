@@ -20,7 +20,7 @@ class User(Base):
     full_name = Column(String, nullable=False)
     
     phone_number = Column(String, nullable=True)
-    profile_picture = Column(String, nullable=True)
+    profile_picture = Column(String, default="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png", nullable=True)
     
     # Role: "user", "doctor", "admin"
     role = Column(String, default="user", nullable=False)
@@ -38,4 +38,4 @@ class User(Base):
     # One-to-One relationship (User can be a Doctor)
     # uselist=False ensures we get a single object, not a list
     doctor = relationship("Doctor", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    appointments = relationship("Appointment", back_populates="patient")
+    appointments = relationship("Appointment", back_populates="patient", cascade="all, delete-orphan")

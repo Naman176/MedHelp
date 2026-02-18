@@ -11,12 +11,9 @@ from app.dependencies import get_current_user
 
 router = APIRouter()
 
-# This endpoint allows users to register with email and password, or via Google (if password is not provided)
+# Register User
 @router.post("/register", response_model=UserResponse)
 async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    """
-    Register a new user.
-    """
     # Check if email already exists
     db_user = await get_user_by_email(db, email=user.email)
     if db_user:
@@ -25,14 +22,12 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     # Create the user
     return await create_user(db=db, user=user)
 
-# This endpoint allows users to get their own profile information
+# Get User Profile
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user: User = Depends(get_current_user)):
-    """
-    Validates the token, retrieves the user from the database, and returns the user's information.
-    """
     return current_user
 
+# Update User Profile
 @router.put("/me", response_model=UserResponse)
 async def update_user_profile(
     full_name: Optional[str] = Form(None),
@@ -41,10 +36,6 @@ async def update_user_profile(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Update the current logged-in user's profile.
-    Allows partial updates (e.g., just changing the phone number or uploading a picture).
-    """
     # Update text fields if provided
     if full_name:
         current_user.full_name = full_name
@@ -75,6 +66,7 @@ async def update_user_profile(
     
     return current_user
 
+# Contact Us Route
 @router.post("/contact")
 async def submit_contact_form(contact_data: ContactCreate):
     """

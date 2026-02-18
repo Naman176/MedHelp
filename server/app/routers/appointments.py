@@ -18,6 +18,7 @@ from app.schemas.appointment import AppointmentResponse, AppointmentUpdate
 
 router = APIRouter()
 
+# Book an Appointment
 @router.post("/book", status_code=status.HTTP_201_CREATED)
 async def book_appointment(
     booking_data: AppointmentCreate,
@@ -126,6 +127,7 @@ async def book_appointment(
     
     return {"message": "Appointment booked successfully", "appointment_id": new_appointment.id}
 
+# Get All Appointments for User(Patient/Doctor)
 @router.get("/", response_model=List[AppointmentResponse])
 async def get_my_appointments(
     current_user: User = Depends(get_current_user),
@@ -152,8 +154,6 @@ async def get_my_appointments(
     )
     await db.commit()
 
-    # FETCH THE LIST
-
     # DOCTOR LOGIC
     if current_user.role == "doctor":
         query_doctor = await db.execute(select(Doctor).where(Doctor.user_id == current_user.id))
@@ -169,16 +169,7 @@ async def get_my_appointments(
         )
         return query.scalars().all()
 
-    # ADMIN LOGIC
-    elif current_user.role == "admin":
-         query = await db.execute(
-            select(Appointment)
-            .order_by(desc(Appointment.appointment_date))
-        )
-         return query.scalars().all()
-
     # PATIENT LOGIC (The Default for everyone else)
-    # This catches role="patient", role="user", or any other normal user
     else:
         query = await db.execute(
             select(Appointment)
@@ -187,7 +178,7 @@ async def get_my_appointments(
         )
         return query.scalars().all()
     
-
+# Update Appointment Status
 @router.put("/{appointment_id}/status", response_model=AppointmentResponse)
 async def update_appointment_status(
     appointment_id: UUID,

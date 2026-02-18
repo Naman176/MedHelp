@@ -11,6 +11,7 @@ from app.core.config import settings
 
 router = APIRouter()
 
+# Manual User Login
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),

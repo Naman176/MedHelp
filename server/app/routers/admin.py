@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import selectinload
 from typing import List
 from uuid import UUID
@@ -8,8 +8,11 @@ from uuid import UUID
 from app.core.database import get_db
 from app.models.user import User
 from app.models.doctor import Doctor
+from app.models.appointment import Appointment
 from app.dependencies import verify_admin
 from app.schemas.admin import PendingDoctorResponse, VerifyDoctorResponse
+from app.schemas.user import UserResponse
+from app.schemas.appointment import AppointmentResponse
 from app.core.cloudinary_utils import delete_file
 
 router = APIRouter()
@@ -61,6 +64,7 @@ async def verify_doctor(
         "doctor_id": doctor.id
     }
 
+# Delete User
 @router.delete("/users/{user_id}", tags=["Admin"])
 async def delete_user(
     user_id: UUID,
@@ -98,3 +102,25 @@ async def delete_user(
         "message": f"User '{user_to_delete.email}' and all associated data have been permanently deleted.",
         "deleted_user_id": user_to_delete.id
     }
+
+# Get All Users
+@router.get("/users", response_model=List[UserResponse])
+async def get_all_users(
+    current_user: User = Depends(verify_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    query = await db.execute(select(User).order_by(desc(User.created_at)))
+    return query.scalars().all()
+
+# Get All Appointments
+@router.get("/appointments", response_model=List[AppointmentResponse])
+async def get_all_appointments(
+    current_user: User = Depends(verify_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    query = await db.execute(
+        select(Appointment)
+        .options(selectinload(Appointment.doctor), selectinload(Appointment.patient))
+        .order_by(desc(Appointment.appointment_date), desc(Appointment.appointment_time))
+    )
+    return query.scalars().all()

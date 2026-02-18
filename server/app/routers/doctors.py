@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import time
 from sqlalchemy.orm import selectinload
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 
@@ -13,10 +13,11 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.doctor import Doctor
 from app.core.cloudinary_utils import delete_file, upload_file
-from app.schemas.doctor import AvailabilityCreate, DoctorAvailabilityRead
+from app.schemas.doctor import AvailabilityCreate, DoctorAvailabilityRead, DoctorResponse
 
 router = APIRouter()
 
+# Apply for Doctor
 @router.post("/apply", status_code=status.HTTP_201_CREATED)
 async def apply_for_doctor(
     # We use Form(...) because we are sending a file along with text
@@ -78,6 +79,7 @@ async def apply_for_doctor(
         "doctor_id": new_doctor.id
     }
 
+# Set Doctor Availability
 @router.post("/availability")
 async def set_availability(
     availability_data: AvailabilityCreate,
@@ -141,11 +143,11 @@ async def set_availability(
     await db.commit()
     
     return {
-        "status": "success", 
         "message": f"Availability set for {len(new_days)} days",
         "days": new_days
     }
 
+# Get All Doctors
 @router.get("/")
 async def get_all_doctors(db: AsyncSession = Depends(get_db)):
     # JOIN Doctor and User, and filter by User.is_verified == True
@@ -161,15 +163,12 @@ async def get_all_doctors(db: AsyncSession = Depends(get_db)):
     
     return verified_doctors
 
+# Get availability of a particular doctor
 @router.get("/{doctor_id}/availability", response_model=List[DoctorAvailabilityRead])
 async def get_doctor_availability(
     doctor_id: UUID,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Fetch a specific doctor's working schedule.
-    Used by the frontend to generate the 30-minute booking slots.
-    """
     # Check if the doctor exists
     query_doc = await db.execute(select(Doctor).where(Doctor.id == doctor_id).options(selectinload(Doctor.user)))
     doctor = query_doc.scalars().first()
@@ -190,3 +189,56 @@ async def get_doctor_availability(
     schedule = query_avail.scalars().all()
     
     return schedule
+
+# Get Doctor's Professional Profile
+@router.get("/me", response_model=DoctorResponse)
+async def get_doctor_profile_me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if current_user.role != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Only doctors have a professional profile."
+        )
+
+    query = await db.execute(
+        select(Doctor)
+        .where(Doctor.user_id == current_user.id)
+        .options(selectinload(Doctor.user))
+    )
+    doctor = query.scalars().first()
+    
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Doctor profile not found."
+        )
+    
+    return doctor
+
+# Search Doctor by Name/Specialization
+@router.get("/search", response_model=List[DoctorResponse])
+async def search_doctors(
+    name: Optional[str] = Query(None, description="Search by doctor's full name"),
+    specialization: Optional[str] = Query(None, description="Filter by specialization (e.g., Dentist)"),
+    current_user: User = Depends(get_current_user), # Patient must be logged in
+    db: AsyncSession = Depends(get_db)
+):
+    # BASE QUERY: Join User model so we can check verification AND search by name
+    query = select(Doctor).join(Doctor.user).where(User.is_verified == True)
+    
+    # DYNAMIC FILTERS
+    if name:
+        # Searches the connected User table for the doctor's name
+        query = query.where(User.full_name.ilike(f"%{name}%"))
+        
+    if specialization:
+        # Searches the Doctor table for their field of medicine
+        query = query.where(Doctor.specialization.ilike(f"%{specialization}%"))
+
+    # Execute and load the nested user relationship to get name, email, etc.
+    query = query.options(selectinload(Doctor.user))
+    result = await db.execute(query)
+    
+    return result.scalars().all()

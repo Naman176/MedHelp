@@ -5,6 +5,7 @@ from datetime import datetime
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
+from typing import List
 
 from app.core.database import get_db
 from app.dependencies import get_current_user
@@ -13,9 +14,9 @@ from app.models.doctor import Doctor
 from app.models.appointment import Appointment
 from app.models.availability import DoctorAvailability
 from app.schemas.appointment import AppointmentCreate
-from typing import List
 from app.schemas.appointment import AppointmentResponse, AppointmentUpdate
 from app.services.notification import send_notification
+from app.services.video import create_video_room
 
 router = APIRouter()
 
@@ -213,6 +214,8 @@ async def update_appointment_status(
     
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
+    
+    meeting_link = None
 
     # The User is the PATIENT
     if appointment.patient_id == current_user.id:
@@ -271,7 +274,9 @@ async def update_appointment_status(
 
         # Generate Link if Confirming Virtual
         if new_status == "CONFIRMED" and appointment.appointment_type == "VIRTUAL":
-            appointment.meeting_link = f"https://meet.google.com/med-help-{appointment.id}"
+            # We use the real Daily service now
+            meeting_link = await create_video_room(str(appointment_id), appointment.appointment_date)
+            appointment.meeting_link = meeting_link
 
     # Apply Update
     appointment.status = update_data.status
@@ -294,13 +299,14 @@ async def update_appointment_status(
             )
 
     # If the DOCTOR changed it (Confirmed or Rejected)
-    elif appointment.doctor_id == doctor_record.id:
+    elif 'doctor_record' in locals() and appointment.doctor_id == doctor_record.id:
         if update_data.status == "CONFIRMED":
+            link_text = f" Join here: {meeting_link}" if meeting_link else ""
             await send_notification(
                 db=db,
                 user_id=appointment.patient_id,
                 title="Appointment Confirmed!",
-                message=f"Great news! Your appointment with Dr. {appointment.doctor.user.full_name} on {appointment.appointment_date} is confirmed.",
+                message=f"Great news! Your appointment with Dr. {appointment.doctor.user.full_name} on {appointment.appointment_date} is confirmed. Join this link {link_text} at your booked slot",
                 notification_type="SUCCESS"
             )
         elif update_data.status == "REJECTED":

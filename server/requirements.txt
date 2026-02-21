@@ -23,3 +23,6 @@ python-multipart
 email-validator
 pydantic[email]
 cloudinary
+
+# Video Call
+httpx

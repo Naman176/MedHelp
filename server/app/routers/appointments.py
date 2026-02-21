@@ -15,6 +15,7 @@ from app.models.availability import DoctorAvailability
 from app.schemas.appointment import AppointmentCreate
 from typing import List
 from app.schemas.appointment import AppointmentResponse, AppointmentUpdate
+from app.services.notification import send_notification
 
 router = APIRouter()
 
@@ -125,6 +126,24 @@ async def book_appointment(
         await db.rollback()
         raise HTTPException(status_code=409, detail="Slot was just taken by someone else.")
     
+    # Notify the Patient
+    await send_notification(
+        db=db,
+        user_id=current_user.id,
+        title="Appointment Requested",
+        message=f"Your request with Dr. {doctor.user.full_name} is pending confirmation.",
+        notification_type="INFO"
+    )
+    
+    # Notify the Doctor
+    await send_notification(
+        db=db,
+        user_id=doctor.user_id,
+        title="New Booking Request",
+        message=f"A patient has requested an appointment on {booking_data.appointment_date} at {clean_time}.",
+        notification_type="INFO"
+    )
+    
     return {"message": "Appointment booked successfully", "appointment_id": new_appointment.id}
 
 # Get All Appointments for User(Patient/Doctor)
@@ -187,7 +206,9 @@ async def update_appointment_status(
     db: AsyncSession = Depends(get_db)
 ):
     # Fetch the Appointment
-    query = await db.execute(select(Appointment).where(Appointment.id == appointment_id))
+    query = await db.execute(select(Appointment).where(Appointment.id == appointment_id).options(
+        selectinload(Appointment.doctor).selectinload(Doctor.user)
+    ))
     appointment = query.scalars().first()
     
     if not appointment:
@@ -257,5 +278,38 @@ async def update_appointment_status(
     
     await db.commit()
     await db.refresh(appointment)
+
+    # If the PATIENT cancelled it
+    if appointment.patient_id == current_user.id and update_data.status == "CANCELLED":
+        # We need the doctor's user_id to notify them
+        query_doc = await db.execute(select(Doctor).where(Doctor.id == appointment.doctor_id))
+        doc_record = query_doc.scalars().first()
+        if doc_record:
+            await send_notification(
+                db=db,
+                user_id=doc_record.user_id,
+                title="Appointment Cancelled",
+                message=f"A patient cancelled their slot on {appointment.appointment_date}.",
+                notification_type="WARNING"
+            )
+
+    # If the DOCTOR changed it (Confirmed or Rejected)
+    elif appointment.doctor_id == doctor_record.id:
+        if update_data.status == "CONFIRMED":
+            await send_notification(
+                db=db,
+                user_id=appointment.patient_id,
+                title="Appointment Confirmed!",
+                message=f"Great news! Your appointment with Dr. {appointment.doctor.user.full_name} on {appointment.appointment_date} is confirmed.",
+                notification_type="SUCCESS"
+            )
+        elif update_data.status == "REJECTED":
+            await send_notification(
+                db=db,
+                user_id=appointment.patient_id,
+                title="Appointment Declined",
+                message=f"Your appointment request for {appointment.appointment_date} could not be accepted.",
+                notification_type="WARNING"
+            )
     
     return appointment

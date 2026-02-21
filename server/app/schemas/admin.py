@@ -29,3 +29,6 @@ class PendingDoctorResponse(BaseModel):
 class VerifyDoctorResponse(BaseModel):
     message: str
     doctor_id: UUID
+
+class RejectDoctorRequest(BaseModel):
+    reason: str

@@ -10,10 +10,11 @@ from app.models.user import User
 from app.models.doctor import Doctor
 from app.models.appointment import Appointment
 from app.dependencies import verify_admin
-from app.schemas.admin import PendingDoctorResponse, VerifyDoctorResponse
+from app.schemas.admin import PendingDoctorResponse, RejectDoctorRequest, VerifyDoctorResponse
 from app.schemas.user import UserResponse
 from app.schemas.appointment import AppointmentResponse
 from app.core.cloudinary_utils import delete_file
+from app.services.notification import send_notification
 
 router = APIRouter()
 
@@ -58,10 +59,62 @@ async def verify_doctor(
     doctor.user.role = "doctor"
 
     await db.commit()
+
+    await send_notification(
+        db=db,
+        user_id=doctor.user_id,
+        title="Profile Verified",
+        message="Congratulations! Your medical profile is approved. You can now accept bookings.",
+        notification_type="SUCCESS"
+    )
     
     return {
         "message": f"Doctor {doctor.user.full_name} has been successfully verified.", 
         "doctor_id": doctor.id
+    }
+
+# REJECT A DOCTOR APPLICATION
+@router.patch("/doctors/{doctor_id}/reject", response_model=VerifyDoctorResponse)
+async def reject_doctor(
+    doctor_id: UUID,
+    payload: RejectDoctorRequest,
+    admin: User = Depends(verify_admin), 
+    db: AsyncSession = Depends(get_db)
+) -> dict:
+    
+    query = (
+        select(Doctor)
+        .where(Doctor.id == doctor_id)
+        .options(selectinload(Doctor.user))
+    )
+    result = await db.execute(query)
+    doctor = result.scalars().first()
+    
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+        
+    if doctor.user.is_verified:
+        raise HTTPException(status_code=400, detail="Cannot reject a doctor who is already verified.")
+    
+    await send_notification(
+        db=db,
+        user_id=doctor.user_id,
+        title="Application Declined",
+        message=f"Your application to join as a doctor was not approved. Reason: {payload.reason}",
+        notification_type="WARNING"
+    )
+
+    # Delete the uploaded document from Cloudinary here
+    if doctor.degree_upload_url:
+        delete_file(doctor.degree_upload_url)
+
+    # Delete the pending doctor record so they can apply again with correct info
+    await db.delete(doctor)
+    await db.commit()
+    
+    return {
+        "message": f"Doctor {doctor.user.full_name}'s application has been rejected and they have been notified.", 
+        "doctor_id": doctor_id
     }
 
 # Delete User

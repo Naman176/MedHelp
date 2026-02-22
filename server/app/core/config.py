@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str
 
     DAILY_API_KEY: str
+    GOOGLE_CLIENT_ID: str
 
     class Config:
         env_file = ".env"

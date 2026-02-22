@@ -1,6 +1,9 @@
 import React from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google';
+import type {CredentialResponse} from "@react-oauth/google"
+
 import "../styles/register.css";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -66,9 +69,9 @@ const Login: React.FC = ()=> {
         }
         );
 
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.access_token);
 
-        const decoded: JwtPayload = jwtDecode(data.token);
+        const decoded: JwtPayload = jwtDecode(data.access_token);
         dispatch(setUserInfo(decoded.userId));
         getUser(decoded.userId);
     } catch (error) {
@@ -78,14 +81,27 @@ const Login: React.FC = ()=> {
 
   const getUser = async (_id: string): Promise<void> => {
     try {
-      const temp = await fetchData(`/users/me`);
+      const temp = await fetchData(`/user/me`);
       dispatch(setUserInfo(temp));
       navigate("/");
     } catch (error) {
       console.error(error);
     }
   };
-
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      const { data } = await axios.post("/user/google", { token: credentialResponse.credential });
+      localStorage.setItem("token", data.access_token);
+      const decoded: JwtPayload = jwtDecode(data.access_token);
+      dispatch(setUserInfo(decoded.userId));
+      getUser(decoded.userId);
+     
+      toast.success("Google Token Received! Check console.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Google Login Failed on our end");
+    }
+  };
   return (
     <section className="register-section flex-center">
       <div className="register-container flex-center">
@@ -114,7 +130,20 @@ const Login: React.FC = ()=> {
             sign in
           </button>
         </form>
-
+        <div style={{ margin: "20px 0", textAlign: "center" }}>
+          <p style={{ marginBottom: "10px", color: "gray" }}>OR</p>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => {
+                console.log('Google Login Failed');
+                toast.error("Google Login window closed or failed");
+              }}
+              shape="rectangular"
+              theme="outline"
+            />
+          </div>
+        </div>
         <p>
           Not a user?{" "}
           <NavLink className="login-link" to="/register">

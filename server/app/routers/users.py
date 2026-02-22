@@ -1,15 +1,71 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from google.oauth2 import id_token
+from google.auth.transport import requests
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
+from datetime import timedelta
+import string
+import secrets
 
 from app.core.cloudinary_utils import upload_file, delete_file
 from app.core.database import get_db
+from app.core.security import create_access_token
 from app.schemas.user import ContactCreate, UserCreate, UserResponse
+from app.schemas.token import GoogleTokenRequest
 from app.services.user import create_user, get_user_by_email 
 from app.models.user import User
 from app.dependencies import get_current_user
+from app.core.config import settings
 
 router = APIRouter()
+
+GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
+
+@router.post("/google")
+async def google_auth(request: GoogleTokenRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        # Verify the token with Google's servers
+        id_info = id_token.verify_oauth2_token(
+            request.token, 
+            requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+        
+        # Extract the user's info from the verified token
+        email = id_info.get("email")
+        name = id_info.get("name")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="No email provided by Google")
+
+        # Check if this user already exists
+        user = await get_user_by_email(db, email=email)
+
+        # Auto-Register new user
+        if not user:
+            # Generate a random 16-character dummy password
+            alphabet = string.ascii_letters + string.digits
+            dummy_password = ''.join(secrets.choice(alphabet) for i in range(16))
+            
+            user = UserCreate(
+                email=email,
+                full_name=name,
+                password = dummy_password,
+            )
+            await create_user(db=db, user=user)
+
+        # Generate standard JWT token 
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(data={"sub": user.email, "role": user.role}, expires_delta=access_token_expires)
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    except ValueError:
+        # This catches invalid or expired Google tokens
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired Google Token"
+        )
+
 
 # Register User
 @router.post("/register", response_model=UserResponse)

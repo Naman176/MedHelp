@@ -8,3 +8,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None
+
+class GoogleTokenRequest(BaseModel):
+    token: str

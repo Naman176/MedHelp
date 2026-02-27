@@ -16,7 +16,7 @@ interface RegisterFormDetails {
 }
 
 const Register: React.FC = () => {
-//   const [file, setFile] = useState<string>("");
+  //   const [file, setFile] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [formDetails, setFormDetails] = useState<RegisterFormDetails>({
     firstname: "",
@@ -36,9 +36,7 @@ const Register: React.FC = () => {
     });
   };
 
-  const formSubmit = async (
-    e: FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const formSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     try {
       e.preventDefault();
 
@@ -73,7 +71,7 @@ const Register: React.FC = () => {
           loading: "Registering user...",
           success: "User registered successfully",
           error: "Unable to register user",
-        }
+        },
       );
 
       navigate("/login");
@@ -142,11 +140,7 @@ const Register: React.FC = () => {
             onChange={inputChange}
           />
 
-          <button
-            type="submit"
-            className="btn form-btn"
-            disabled={loading}
-          >
+          <button type="submit" className="btn form-btn" disabled={loading}>
             sign up
           </button>
         </form>
@@ -160,6 +154,6 @@ const Register: React.FC = () => {
       </div>
     </section>
   );
-}
+};
 
 export default Register;

@@ -1,8 +1,8 @@
 import React from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { GoogleLogin } from '@react-oauth/google';
-import type {CredentialResponse} from "@react-oauth/google"
+import { GoogleLogin } from "@react-oauth/google";
+import type { CredentialResponse } from "@react-oauth/google";
 
 import "../styles/register.css";
 import axios from "axios";
@@ -23,7 +23,7 @@ interface JwtPayload {
   userId: string;
 }
 
-const Login: React.FC = ()=> {
+const Login: React.FC = () => {
   const dispatch = useDispatch();
   const [formDetails, setFormDetails] = React.useState<FormDetails>({
     email: "",
@@ -39,63 +39,72 @@ const Login: React.FC = ()=> {
       [name]: value,
     });
   };
-    const formSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+  const formSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     try {
-        e.preventDefault();
-        const { email, password } = formDetails;
+      e.preventDefault();
+      const { email, password } = formDetails;
 
-        if (!email || !password) {
+      if (!email || !password) {
         toast.error("Input field should not be empty");
         return;
-        } else if (password.length < 5) {
+      } else if (password.length < 5) {
         toast.error("Password must be at least 5 characters long");
         return;
-        }
+      }
 
-        const formData = new URLSearchParams();
-        formData.append("username", email);
-        formData.append("password", password);
+      const formData = new URLSearchParams();
+      formData.append("username", email);
+      formData.append("password", password);
 
-        const { data } = await toast.promise(
+      const { data } = await toast.promise(
         axios.post("/auth/login", formData, {
-            headers: {
+          headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            },
+          },
         }),
         {
-            loading: "Logging in...",
-            success: "Login successfully",
-            error: "Unable to login user",
-        }
-        );
+          loading: "Logging in...",
+          success: "Login successfully",
+          error: "Unable to login user",
+        },
+      );
 
-        localStorage.setItem("token", data.access_token);
+      localStorage.setItem("token", data.access_token);
 
-        const decoded: JwtPayload = jwtDecode(data.access_token);
-        dispatch(setUserInfo(decoded.userId));
-        getUser(decoded.userId);
+      const decoded: JwtPayload = jwtDecode(data.access_token);
+      getUser(decoded.userId);
     } catch (error) {
-        console.error(error);
+      console.error(error);
     }
-    };
+  };
 
   const getUser = async (_id: string): Promise<void> => {
     try {
-      const temp = await fetchData(`/user/me`);
-      dispatch(setUserInfo(temp));
+      const userDetails = await fetchData(`/user/me`);
+      dispatch(
+        setUserInfo({
+          fullName: userDetails.full_name,
+          email: userDetails.email,
+          profilePic: userDetails.profile_picture,
+          role: userDetails.role,
+        }),
+      );
       navigate("/");
     } catch (error) {
       console.error(error);
     }
   };
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse,
+  ) => {
     try {
-      const { data } = await axios.post("/user/google", { token: credentialResponse.credential });
+      const { data } = await axios.post("/user/google", {
+        token: credentialResponse.credential,
+      });
       localStorage.setItem("token", data.access_token);
       const decoded: JwtPayload = jwtDecode(data.access_token);
-      dispatch(setUserInfo(decoded.userId));
       getUser(decoded.userId);
-     
+
       toast.success("Google Token Received! Check console.");
     } catch (error) {
       console.error(error);
@@ -136,7 +145,7 @@ const Login: React.FC = ()=> {
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => {
-                console.log('Google Login Failed');
+                console.log("Google Login Failed");
                 toast.error("Google Login window closed or failed");
               }}
               shape="rectangular"
@@ -153,6 +162,6 @@ const Login: React.FC = ()=> {
       </div>
     </section>
   );
-}
+};
 
 export default Login;

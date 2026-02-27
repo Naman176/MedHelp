@@ -1,19 +1,17 @@
 import { Navigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import type { ReactNode } from "react";
+import _ from "lodash";
+import { useSelector } from "react-redux";
+import { getUserInfo } from "../redux/selectors/rootSelectors";
 
 interface Props {
   children: ReactNode;
 }
 
-interface JwtPayload {
-  isAdmin: boolean;
-}
-
 export const Protected = ({ children }: Props) => {
-  const token = localStorage.getItem("token");
+  const userInfo = useSelector(getUserInfo);
 
-  if (!token) {
+  if (!userInfo) {
     return <Navigate to="/" replace />;
   }
 
@@ -21,9 +19,9 @@ export const Protected = ({ children }: Props) => {
 };
 
 export const Public = ({ children }: Props) => {
-  const token = localStorage.getItem("token");
+  const userInfo = useSelector(getUserInfo);
 
-  if (!token) {
+  if (!userInfo || _.isEmpty(userInfo)) {
     return <>{children}</>;
   }
 
@@ -31,15 +29,15 @@ export const Public = ({ children }: Props) => {
 };
 
 export const Admin = ({ children }: Props) => {
-  const token = localStorage.getItem("token");
+  const userInfo = useSelector(getUserInfo);
 
-  if (!token) {
+  if (!userInfo) {
     return <Navigate to="/" replace />;
   }
 
-  const user = jwtDecode<JwtPayload>(token);
+  const userRole = userInfo.role;
 
-  if (user.isAdmin) {
+  if (userRole === "admin") {
     return <>{children}</>;
   }
 

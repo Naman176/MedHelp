@@ -49,9 +49,18 @@
   text-transform: capitalize;
 }
 
-.status-pending { background: #fff7e6; color: #ffa940; }
-.status-success { background: #f6ffed; color: #52c41a; }
-.status-error { background: #fff1f0; color: #ff4d4f; }
+.status-pending {
+  background: #fff7e6;
+  color: #ffa940;
+}
+.status-success {
+  background: #f6ffed;
+  color: #52c41a;
+}
+.status-error {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
 
 /* Type Tag */
 .type-tag {

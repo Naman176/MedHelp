@@ -1,4 +1,3 @@
-
 @import url(app.css);
 
 .register-section {
@@ -17,12 +16,12 @@
   font-size: 2rem;
 }
 
-.btn:hover{
+.btn:hover {
   color: white;
 }
 
-a.login-link{
-  color:#a749ff;
+a.login-link {
+  color: #a749ff;
 }
 
 .register-form {

@@ -1,27 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import fetchData from "../helper/apiCall";
 import toast from "react-hot-toast";
-import "../styles/appointments.css"
-
-interface Appointment {
-  id: string;
-  doctor_id: string;
-  patient_id: string;
-  appointment_date: string;
-  appointment_time: string;
-  status: string;
-  appointment_type: string;
-  meeting_link?: string;
-}
+import { setAppointments } from "../redux/reducers/rootSlice";
+import { getAppointments } from "../redux/selectors/rootSelectors";
+import "../styles/appointments.css";
 
 const Appointments: React.FC = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const dispatch = useDispatch();
+  
+  // Get appointments from Redux store
+  const appointments = useSelector(getAppointments);
   const [loading, setLoading] = useState(true);
 
-  const getAppointments = async () => {
+  const fetchAppointments = async () => {
     try {
       const data = await fetchData("/appointments/");
-      setAppointments(data);
+      // Store in Redux instead of local state
+      dispatch(setAppointments(data));
     } catch (error) {
       toast.error("Failed to load appointments");
       console.error(error);
@@ -31,15 +27,20 @@ const Appointments: React.FC = () => {
   };
 
   useEffect(() => {
-    getAppointments();
+    // Only fetch if we don't have appointments yet (optional optimization)
+    if (appointments.length === 0) {
+      fetchAppointments();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'scheduled': return 'status-pending';
-      case 'completed': return 'status-success';
-      case 'cancelled': return 'status-error';
-      default: return '';
+      case "scheduled": return "status-pending";
+      case "completed": return "status-success";
+      case "cancelled": return "status-error";
+      default: return "";
     }
   };
 
@@ -49,9 +50,10 @@ const Appointments: React.FC = () => {
     <div className="appointments-container">
       <div className="table-header">
         <h2>Your Appointments</h2>
-        <button className="btn-primary" onClick={getAppointments}>Refresh</button>
+        <button className="btn-primary" onClick={fetchAppointments}>
+          Refresh
+        </button>
       </div>
-
       <div className="table-wrapper">
         <table className="med-table">
           <thead>
@@ -69,7 +71,11 @@ const Appointments: React.FC = () => {
                 <tr key={apt.id}>
                   <td>{new Date(apt.appointment_date).toLocaleDateString()}</td>
                   <td>{apt.appointment_time}</td>
-                  <td><span className="type-tag">{apt.appointment_type.split('_').join(' ')}</span></td>
+                  <td>
+                    <span className="type-tag">
+                      {apt.appointment_type.split("_").join(" ")}
+                    </span>
+                  </td>
                   <td>
                     <span className={`status-badge ${getStatusClass(apt.status)}`}>
                       {apt.status}

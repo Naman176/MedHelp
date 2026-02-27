@@ -1,0 +1,48 @@
+.doctors-page {
+  height: calc(100vh - 160px); /* Fill space between header/footer */
+  padding: 20px;
+}
+
+.virtual-list-container {
+  height: 100%;
+  width: 100%;
+}
+
+.doctor-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 15px;
+  border: 1px solid #edf2f7;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.doc-info-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.doc-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+}
+
+.specialization {
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.availability.online {margin-left: 10px; color: #10b981; }
+.availability.offline { color: #ef4444; }
+
+.booking-title {
+  margin-bottom: 20px;
+  font-size: 2rem;
+  color: #1a202c;
+}

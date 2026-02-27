@@ -21,7 +21,6 @@ body {
   background-color: white;
 }
 
-
 .page-heading {
   font-size: 2rem;
   text-align: center;
@@ -45,7 +44,7 @@ p {
   color: black;
   background-color: white;
   border-radius: 10px;
-  border-style:double;
+  border-style: double;
   font-size: 1rem;
   padding: 0.6rem 0.8rem;
   border: none;
@@ -63,7 +62,7 @@ p {
   border-width: 2px;
 }
 
-.container{
+.container {
   font-size: 200;
   color: black;
 }
@@ -84,7 +83,7 @@ p {
 }
 
 :root {
-  --primary: #A749FF;
+  --primary: #a749ff;
   --bg-white: #ffffff;
   --light-gray: #f0f0f0;
   --text-dark: #1a1a1a;
@@ -110,12 +109,16 @@ p {
 
 .logo a {
   text-decoration: none;
-  font-size: 2.0rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--primary);
 }
 
-.header-right { display: flex; align-items: center; gap: 20px; }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
 
 /* Middle Section */
 .middle-section {
@@ -130,7 +133,11 @@ p {
   padding: 30px 15px;
 }
 
-.side-nav { display: flex; flex-direction: column; gap: 10px; }
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .nav-item {
   text-decoration: none;
@@ -154,9 +161,25 @@ p {
 }
 
 /* Buttons */
-.btn-primary { background: var(--primary); color: white !important; padding: 10px 22px; border-radius: 6px; text-decoration: none; }
-.btn-ghost { color: var(--primary) !important; text-decoration: none; font-weight: 600; }
-.btn-logout { background: none; border: 1px solid #ddd; padding: 5px 12px; cursor: pointer; border-radius: 4px; }
+.btn-primary {
+  background: var(--primary);
+  color: white !important;
+  padding: 10px 22px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+.btn-ghost {
+  color: var(--primary) !important;
+  text-decoration: none;
+  font-weight: 600;
+}
+.btn-logout {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 5px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
 
 /* Footer */
 .footer {
@@ -173,8 +196,15 @@ p {
   height: 100%;
 }
 
-.social-links { display: flex; gap: 20px; }
-.social-links a { text-decoration: none; color: var(--primary); font-size: 0.9rem; }
+.social-links {
+  display: flex;
+  gap: 20px;
+}
+.social-links a {
+  text-decoration: none;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
 
 /* Landing Page Placeholder */
 .landing-page {
@@ -244,4 +274,11 @@ p {
 .btn-logout:hover {
   background-color: #ff4d4d;
   color: white;
+}
+
+.auth-btns {
+  justify-content: space-between;
+  display: flex;
+  align-items: center;
+  width: 180px;
 }

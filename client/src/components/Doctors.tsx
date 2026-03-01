@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { List, AutoSizer } from "react-virtualized";
@@ -13,12 +13,13 @@ const Doctors: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const doctors = useSelector(getDoctors);
+  const [loading, setLoading] = useState(false);
 
   const getAllDoctors = async () => {
     try {
+      setLoading(true);
       const response = await fetchData("/doctors/");
       
-      // Map Snake Case from API to Camel Case for Frontend
       const mappedDoctors: Doctor[] = response.map((doc: any) => ({
         id: doc.id,
         userId: doc.user_id,
@@ -40,12 +41,16 @@ const Doctors: React.FC = () => {
       dispatch(setDoctors(mappedDoctors));
     } catch (error) {
       console.error("Failed to fetch doctors", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
+  if (doctors.length === 0) {
     getAllDoctors();
-  }, []);
+  }
+}, [doctors.length]);
 
   const rowRenderer = ({ index, key, style }: ListRowProps) => {
     const doctor = doctors[index];
@@ -91,8 +96,13 @@ const Doctors: React.FC = () => {
         <h2>Verified Specialists</h2>
         <p>Browse through our network of certified medical professionals.</p>
       </div>
+      {loading && (
+        <div className="loading-banner">
+          Loading doctors, please wait...
+        </div>
+      )}
 
-      <div className="virtual-list-container">
+      {doctors.length > 0 && <div className="virtual-list-container">
         <AutoSizer>
           {({ height, width }) => (
             <List
@@ -104,7 +114,7 @@ const Doctors: React.FC = () => {
             />
           )}
         </AutoSizer>
-      </div>
+      </div>}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { setAppointments } from "../redux/reducers/rootSlice";
 import { getAppointments } from "../redux/selectors/rootSelectors";
 import "../styles/appointments.css";
+import type { Appointment } from "../types";
 
 const Appointments: React.FC = () => {
   const dispatch = useDispatch();
@@ -45,7 +46,22 @@ const Appointments: React.FC = () => {
   };
 
   if (loading) return <div className="loader">Loading your schedule...</div>;
-
+  const renderMeetingCell = (apt: Appointment) => {
+    if (apt.appointment_type === "VIRTUAL" && apt.meeting_link) {
+      return (
+        <a href={apt.meeting_link} target="_blank" rel="noreferrer" className="join-link">
+          Join Meeting
+        </a>
+      );
+    } else if (apt.appointment_type === "VIRTUAL" && apt.status === "PENDING") {
+      return <span>Wait for confirmation</span>;
+    } else if (apt.appointment_type === "IN_PERSON") {
+      return <span className="text-muted">In-Person</span>;
+    }
+    else {
+      return <span className="text-muted">N/A</span>;
+    }
+  };
   return (
     <div className="appointments-container">
       <div className="table-header">
@@ -82,13 +98,7 @@ const Appointments: React.FC = () => {
                     </span>
                   </td>
                   <td>
-                    {apt.meeting_link && apt.appointment_type === "VIRTUAL" ? (
-                      <a href={apt.meeting_link} target="_blank" rel="noreferrer" className="join-link">
-                        Join Meeting
-                      </a>
-                    ) : (
-                      <span className="text-muted">In-Person</span>
-                    )}
+                    {renderMeetingCell(apt)}
                   </td>
                 </tr>
               ))

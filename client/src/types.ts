@@ -17,7 +17,7 @@ export interface Appointment {
   patient_id: string;
   appointment_date: string;
   appointment_time: string;
-  status: 'Scheduled' | 'Completed' | 'Cancelled'; // Using specific strings for better safety
+  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'PENDING'; // Using specific strings for better safety
   appointment_type: 'VIRTUAL' | 'IN_PERSON';
   meeting_link?: string;
 }

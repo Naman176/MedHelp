@@ -13,4 +13,23 @@ const fetchData = async (url: string): Promise<any> => {
   return data;
 };
 
+export const postData = async (url: string, payload: any): Promise<any> => {
+  const { data } = await axios.post(url, payload, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return data;
+};
+
+export const postFormData = async (url: string, payload: FormData): Promise<any> => {
+  const { data } = await axios.post(url, payload, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+  return data;
+};
+
 export default fetchData;

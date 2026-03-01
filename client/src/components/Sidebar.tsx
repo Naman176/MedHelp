@@ -8,6 +8,8 @@ import {
   Settings,
 } from "lucide-react";
 import "../styles/Sidebar.css";
+import { useSelector } from "react-redux";
+import { getUserInfo } from "../redux/selectors/rootSelectors";
 
 interface NavItem {
   name: string;
@@ -16,6 +18,15 @@ interface NavItem {
 }
 
 const Sidebar: React.FC = () => {
+  const userInfo = useSelector(getUserInfo);
+  let applyAsDoctor = null;
+  if (userInfo?.role !== "doctor") {
+    applyAsDoctor = {
+      name: "Apply as Doctor", 
+      path: "/apply", 
+      icon: <FileText size={20} /> 
+    };
+  }
   const navItems: NavItem[] = [
     { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
     {
@@ -24,7 +35,7 @@ const Sidebar: React.FC = () => {
       icon: <Calendar size={20} />,
     },
     { name: "View Doctors", path: "/doctors", icon: <Users size={20} /> },
-    { name: "Apply as Doctor", path: "/apply", icon: <FileText size={20} /> },
+    ...(applyAsDoctor ? [applyAsDoctor] : []),
   ];
 
   return (

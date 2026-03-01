@@ -1,0 +1,104 @@
+.apply-doctor-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px 35px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.apply-doctor-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #2d3748;
+  font-size: 24px;
+}
+
+.apply-doctor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.apply-doctor-form label {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 14px;
+}
+
+.apply-doctor-form input,
+.apply-doctor-form textarea {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.apply-doctor-form input:focus,
+.apply-doctor-form textarea:focus {
+  border-color: #3182ce;
+}
+
+.apply-doctor-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.apply-doctor-form input[type="file"] {
+  padding: 6px;
+  background: #f7fafc;
+}
+
+.apply-doctor-form button {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #a749ff;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.apply-doctor-form button:hover {
+  background: #7a05e8;
+}
+
+.apply-doctor-form button:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* Success message */
+.success-message {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #c6f6d5;
+  color: #22543d;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Error message */
+.error-message {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #fed7d7;
+  color: #742a2a;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .apply-doctor-container {
+    margin: 20px;
+    padding: 20px;
+  }
+}

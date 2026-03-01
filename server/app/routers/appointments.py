@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update, or_, desc
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
@@ -146,6 +146,25 @@ async def book_appointment(
     )
     
     return {"message": "Appointment booked successfully", "appointment_id": new_appointment.id}
+
+#route to get booked slots for a doctor on a specific date (for frontend to disable those times)
+@router.get("/booked", response_model=List[str])
+async def get_booked_slots(
+    doctor_id: UUID = Query(...),
+    date: date = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Appointment.appointment_time)
+        .where(Appointment.doctor_id == doctor_id)
+        .where(Appointment.appointment_date == date)
+        .where(Appointment.status.in_(["PENDING", "CONFIRMED"]))
+    )
+
+    times = result.scalars().all()
+
+    # Convert time objects to "HH:MM"
+    return [t.strftime("%H:%M") for t in times]
 
 # Get All Appointments for User(Patient/Doctor)
 @router.get("/", response_model=List[AppointmentResponse])

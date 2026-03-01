@@ -18,6 +18,8 @@ import Appointments from "./components/Appointments";
 
 import "./styles/app.css";
 import Doctors from "./components/Doctors";
+import BookAppointment from "./components/BookAppointment";
+import ApplyAsDoctor from "./components/ApplyAsDoctor";
 
 const GOOGLE_CLIENT_ID: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -26,7 +28,7 @@ const App: React.FC = () => {
   const userInfo = useSelector(getUserInfo) as UserInfo | null; 
   const [loading, setLoading] = useState<boolean>(true);
 
-  const isLoggedIn: boolean = !_.isNil(userInfo) && !_.isEmpty(userInfo);
+  const isLoggedIn: boolean = localStorage.getItem("token") ? true : false;
 
   useEffect(() => {
     setLoading(false);
@@ -56,6 +58,16 @@ const App: React.FC = () => {
               <Route path="/doctors" element={
                 <Protected>
                   <Doctors/>
+                </Protected>
+              } />
+              <Route path="/book-appointment/:doctorId" element={
+                <Protected>
+                  <BookAppointment />
+                </Protected>
+              } />
+              <Route path="/apply" element={
+                <Protected>
+                  <ApplyAsDoctor/>
                 </Protected>
               } />
             </Routes>

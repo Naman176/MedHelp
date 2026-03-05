@@ -147,7 +147,7 @@ async def book_appointment(
     
     return {"message": "Appointment booked successfully", "appointment_id": new_appointment.id}
 
-#route to get booked slots for a doctor on a specific date (for frontend to disable those times)
+#route to get booked slots for a doctor on a specific date
 @router.get("/booked", response_model=List[str])
 async def get_booked_slots(
     doctor_id: UUID = Query(...),

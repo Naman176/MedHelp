@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, HTTPException, status
+from app.services.notification import send_notification
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from datetime import time
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
@@ -73,6 +74,26 @@ async def apply_for_doctor(
             status_code=400, 
             detail="A doctor with this license number already exists in our system."
         )
+    
+    admin_query = await db.execute(select(User).where(User.role == "admin"))
+    admins = admin_query.scalars().all()
+
+    for admin in admins:
+        await send_notification(
+            db=db,
+            user_id=admin.id,
+            title="New Doctor Application",
+            message=f"{current_user.name} has applied to be a {specialization}. Please review their credentials.",
+            notification_type="INFO"
+        )
+        
+    await send_notification(
+        db=db,
+        user_id=current_user.id,
+        title="Application Received",
+        message="We have successfully received your doctor application. Our team will review it shortly.",
+        notification_type="SUCCESS"
+    )
     
     return {
         "message": "Application submitted successfully",
@@ -149,19 +170,43 @@ async def set_availability(
 
 # Get All Doctors
 @router.get("/")
-async def get_all_doctors(db: AsyncSession = Depends(get_db)):
-    # JOIN Doctor and User, and filter by User.is_verified == True
+async def get_all_doctors(
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(6, ge=1, le=100, description="Items per page"),
+    db: AsyncSession = Depends(get_db)
+):
+    offset = (page - 1) * limit
+    conditions = [User.is_verified == True, User.is_active == True]
+
+    # Fetch total count
+    count_query = (
+        select(func.count())
+        .select_from(Doctor)
+        .join(Doctor.user)
+        .where(*conditions)
+    )
+    total_count_result = await db.execute(count_query)
+    total_doctors = total_count_result.scalar()
+
     query = (
         select(Doctor)
         .join(Doctor.user)
-        .where(User.is_verified == True, User.is_active == True) # Only active & verified
+        .where(*conditions)
         .options(selectinload(Doctor.user))
+        .offset(offset)
+        .limit(limit)
     )
     
     result = await db.execute(query)
     verified_doctors = result.scalars().all()
     
-    return verified_doctors
+    return {
+        "total": total_doctors,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total_doctors + limit - 1) // limit, 
+        "data": verified_doctors
+    }
 
 # Get availability of a particular doctor
 @router.get("/{doctor_id}/availability", response_model=List[DoctorAvailabilityRead])
@@ -222,7 +267,6 @@ async def get_doctor_profile_me(
 async def search_doctors(
     name: Optional[str] = Query(None, description="Search by doctor's full name"),
     specialization: Optional[str] = Query(None, description="Filter by specialization (e.g., Dentist)"),
-    current_user: User = Depends(get_current_user), # Patient must be logged in
     db: AsyncSession = Depends(get_db)
 ):
     # BASE QUERY: Join User model so we can check verification AND search by name

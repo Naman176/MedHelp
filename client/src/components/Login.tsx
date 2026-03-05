@@ -87,6 +87,7 @@ const Login: React.FC = () => {
           email: userDetails.email,
           profilePic: userDetails.profile_picture,
           role: userDetails.role,
+          isAuthChecked: true
         }),
       );
       navigate("/");

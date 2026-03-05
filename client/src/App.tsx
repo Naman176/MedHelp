@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { Toaster } from "react-hot-toast";
 
-import { Protected, Public } from "./middleware/route"; 
+import { Admin, Protected, Public } from "./middleware/route"; 
 import { setUserInfo } from "./redux/reducers/rootSlice";
 import { getUserInfo } from "./redux/selectors/rootSelectors";
 import type { UserInfo } from "./types";
@@ -20,27 +20,41 @@ import "./styles/app.css";
 import Doctors from "./components/Doctors";
 import BookAppointment from "./components/BookAppointment";
 import ApplyAsDoctor from "./components/ApplyAsDoctor";
+import ReviewDoctors from "./components/ReviewDoctors";
+import { useGetMeQuery } from "./redux/services/authApi";
+import AllUsers from "./components/AllUsers";
 
 const GOOGLE_CLIENT_ID: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
   const userInfo = useSelector(getUserInfo) as UserInfo | null; 
-  const [loading, setLoading] = useState<boolean>(true);
+  const token = localStorage.getItem("token")
+  const isLoggedIn: boolean =  token ? true : false;
 
-  const isLoggedIn: boolean = localStorage.getItem("token") ? true : false;
+  const { data: userDetails, isLoading, isError } = useGetMeQuery(undefined, {
+    skip: !token,
+  });
 
   useEffect(() => {
-    setLoading(false);
-  }, [userInfo]);
+    if (userDetails) {
+      dispatch(setUserInfo(userDetails));
+    }
+    if (isError) {
+      localStorage.removeItem("token");
+      dispatch(setUserInfo(null));
+    }
+  }, [userDetails, isError, dispatch]);
+
 
   const handleLogout = (): void => {
     localStorage.removeItem("token");
     dispatch(setUserInfo(null));
     window.location.href = "/";
   };
+  const isVerifyingSession = !!token && isLoading;
 
-  if (loading) return <div className="loading-screen">Loading MedHelp...</div>;
+  if (isVerifyingSession) return <div className="loading-screen">Loading MedHelp...</div>;
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -69,6 +83,16 @@ const App: React.FC = () => {
                 <Protected>
                   <ApplyAsDoctor/>
                 </Protected>
+              } />
+              <Route path="/reviewDoctors" element={
+                <Admin>
+                  <ReviewDoctors/>
+                </Admin>
+              } />
+              <Route path="/allUsers" element={
+                <Admin>
+                  <AllUsers/>
+                </Admin>
               } />
             </Routes>
           </Layout>

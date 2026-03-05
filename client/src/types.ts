@@ -1,5 +1,6 @@
 export interface UserInfo {
   fullName?: string;
+  isAuthChecked: boolean;
   email?: string;
   profilePic?: string;
   role?: "user" | "doctor" | "admin";
@@ -33,4 +34,30 @@ export interface Doctor {
   consultationFee: number;
   isAvailable: boolean;
   user: UserInfo;
+}
+
+export interface DoctorRequest {
+  id: string;
+  userId: string;
+  specialization: string;
+  experience: number;
+  consultationFee: number;
+  degreeUrl: string;
+  fullName: string;
+  email: string;
+}
+
+export interface RejectPayload {
+  reason: string;
+}
+
+export interface UserAdminView {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
 }

@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   Calendar,
+  Check,
   Users,
   FileText,
   LayoutDashboard,
@@ -20,6 +21,7 @@ interface NavItem {
 const Sidebar: React.FC = () => {
   const userInfo = useSelector(getUserInfo);
   let applyAsDoctor = null;
+  let adminSidebarRoutes = [];
   if (userInfo?.role !== "doctor") {
     applyAsDoctor = {
       name: "Apply as Doctor", 
@@ -27,8 +29,12 @@ const Sidebar: React.FC = () => {
       icon: <FileText size={20} /> 
     };
   }
+  if (userInfo?.role === "admin"){
+    adminSidebarRoutes.push({name: "Review Pending Doctor Requests", path: "/reviewDoctors", icon: <Check size={20}/>},
+      {name: "Get All Users", path: "/allUsers", icon: <Users size={20}/>},
+    )
+  }
   const navItems: NavItem[] = [
-    { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
     {
       name: "Appointments",
       path: "/appointments",
@@ -36,6 +42,7 @@ const Sidebar: React.FC = () => {
     },
     { name: "View Doctors", path: "/doctors", icon: <Users size={20} /> },
     ...(applyAsDoctor ? [applyAsDoctor] : []),
+    ...(adminSidebarRoutes ? adminSidebarRoutes : [])
   ];
 
   return (

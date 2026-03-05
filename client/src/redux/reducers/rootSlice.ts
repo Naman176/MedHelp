@@ -11,7 +11,7 @@ interface RootState {
 
 const initialState: RootState = {
   loading: true,
-  userInfo: {},
+  userInfo: {isAuthChecked:false,},
   appointments: [],
   doctors: []
 };

@@ -5,7 +5,6 @@ import {
   Check,
   Users,
   FileText,
-  LayoutDashboard,
   Settings,
 } from "lucide-react";
 import "../styles/Sidebar.css";

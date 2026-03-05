@@ -59,6 +59,7 @@ const Register: React.FC = () => {
         toast.error("Passwords do not match");
         return;
       }
+      setLoading(true);
 
       await toast.promise(
         axios.post("/user/register", {
@@ -75,6 +76,7 @@ const Register: React.FC = () => {
       );
 
       navigate("/login");
+      setLoading(false);
     } catch (error) {
       console.error(error);
     }
@@ -113,7 +115,7 @@ const Register: React.FC = () => {
             onChange={inputChange}
           />
 
-          {/* File upload (optional later)
+          {/* File upload
           <input
             type="file"
             name="profile-pic"

@@ -35,6 +35,7 @@ const Doctors: React.FC = () => {
           fullName: doc.user.full_name, 
           email: doc.user.email,
           profilePic: doc.user.profile_pic || doc.user.profilePic,
+          isAuthChecked: true,
         } as UserInfo
       }));
 

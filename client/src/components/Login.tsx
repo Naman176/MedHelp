@@ -9,7 +9,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../redux/reducers/rootSlice";
-import { jwtDecode } from "jwt-decode";
 import fetchData from "../helper/apiCall.ts";
 
 axios.defaults.baseURL = import.meta.env.VITE_SERVER_DOMAIN;
@@ -17,10 +16,6 @@ axios.defaults.baseURL = import.meta.env.VITE_SERVER_DOMAIN;
 interface FormDetails {
   email: string;
   password: string;
-}
-
-interface JwtPayload {
-  userId: string;
 }
 
 const Login: React.FC = () => {
@@ -71,14 +66,13 @@ const Login: React.FC = () => {
 
       localStorage.setItem("token", data.access_token);
 
-      const decoded: JwtPayload = jwtDecode(data.access_token);
-      getUser(decoded.userId);
+      getUser();
     } catch (error) {
       console.error(error);
     }
   };
 
-  const getUser = async (_id: string): Promise<void> => {
+  const getUser = async (): Promise<void> => {
     try {
       const userDetails = await fetchData(`/user/me`);
       dispatch(
@@ -87,7 +81,6 @@ const Login: React.FC = () => {
           email: userDetails.email,
           profilePic: userDetails.profile_picture,
           role: userDetails.role,
-          isAuthChecked: true
         }),
       );
       navigate("/");
@@ -103,8 +96,7 @@ const Login: React.FC = () => {
         token: credentialResponse.credential,
       });
       localStorage.setItem("token", data.access_token);
-      const decoded: JwtPayload = jwtDecode(data.access_token);
-      getUser(decoded.userId);
+      getUser();
 
       toast.success("Google Token Received! Check console.");
     } catch (error) {

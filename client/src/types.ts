@@ -1,6 +1,5 @@
 export interface UserInfo {
   fullName?: string;
-  isAuthChecked: boolean;
   email?: string;
   profilePic?: string;
   role?: "user" | "doctor" | "admin";
@@ -60,4 +59,14 @@ export interface UserAdminView {
   isActive: boolean;
   isVerified: boolean;
   createdAt: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  notification_type: "INFO" | "SUCCESS" | "WARNING" | "ERROR" | "REMINDER";
+  is_read: boolean;
+  created_at: string;
 }

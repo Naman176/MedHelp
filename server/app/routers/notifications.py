@@ -40,6 +40,7 @@ async def get_my_notifications(
     query = await db.execute(
         select(Notification)
         .where(Notification.user_id == current_user.id)
+        .where(Notification.is_read == False)
         .order_by(desc(Notification.created_at))
     )
     return list(query.scalars().all())

@@ -9,18 +9,27 @@ import type { Doctor, UserInfo } from "../types";
 import "../styles/doctors.css";
 import { getDoctors } from "../redux/selectors/rootSelectors";
 
+const LIMIT = 6;
+
 const Doctors: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const doctors = useSelector(getDoctors);
-  const [loading, setLoading] = useState(false);
 
-  const getAllDoctors = async () => {
+  const doctors = useSelector(getDoctors);
+
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const getDoctorsPage = async (pageToFetch: number) => {
     try {
       setLoading(true);
-      const response = await fetchData("/doctors/");
-      
-      const mappedDoctors: Doctor[] = response.map((doc: any) => ({
+
+      const response = await fetchData(
+        `/doctors/?page=${pageToFetch}&limit=${LIMIT}`
+      );
+
+      const mappedDoctors: Doctor[] = response.data.map((doc: any) => ({
         id: doc.id,
         userId: doc.user_id,
         specialization: doc.specialization,
@@ -32,14 +41,19 @@ const Doctors: React.FC = () => {
         isAvailable: doc.is_available,
         user: {
           id: doc.user.id,
-          fullName: doc.user.full_name, 
+          fullName: doc.user.full_name,
           email: doc.user.email,
-          profilePic: doc.user.profile_pic || doc.user.profilePic,
-          isAuthChecked: true,
+          profilePic: doc.user.profile_pic || doc.user.profilePic
         } as UserInfo
       }));
 
-      dispatch(setDoctors(mappedDoctors));
+      const updatedDoctors =
+        pageToFetch === 1 ? mappedDoctors : [...doctors, ...mappedDoctors];
+
+      dispatch(setDoctors(updatedDoctors));
+
+      setTotalPages(response.total_pages);
+      setPage(pageToFetch);
     } catch (error) {
       console.error("Failed to fetch doctors", error);
     } finally {
@@ -48,40 +62,63 @@ const Doctors: React.FC = () => {
   };
 
   useEffect(() => {
-  if (doctors.length === 0) {
-    getAllDoctors();
-  }
-}, [doctors.length]);
+    if (doctors.length === 0) {
+      getDoctorsPage(1);
+    }
+  }, []);
+
+  const loadMoreIfNeeded = ({ index }: { index: number }) => {
+    if (
+      index >= doctors.length - 2 && 
+      !loading &&
+      page < totalPages
+    ) {
+      getDoctorsPage(page + 1);
+    }
+  };
 
   const rowRenderer = ({ index, key, style }: ListRowProps) => {
     const doctor = doctors[index];
     if (!doctor) return null;
 
+    loadMoreIfNeeded({ index });
+
     return (
       <div key={key} style={style} className="doctor-row-wrapper">
         <div className="doctor-card">
           <div className="doc-info-main">
-            <img 
-              src={doctor.user.profilePic || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} 
-              alt="Doctor" 
+            <img
+              src={
+                doctor.user.profilePic ||
+                "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+              }
+              alt="Doctor"
               className="doc-avatar"
             />
+
             <div className="doc-details">
               <h3>Dr. {doctor.user.fullName}</h3>
               <p className="specialization">{doctor.specialization}</p>
-              <p className="experience">{doctor.yearsOfExperience} Years Experience</p>
+              <p className="experience">
+                {doctor.yearsOfExperience} Years Experience
+              </p>
             </div>
           </div>
-          
+
           <div className="doc-stats">
             <span className="fee">Fee: {doctor.consultationFee} Rs</span>
-            <span className={`availability ${doctor.isAvailable ? 'online' : 'offline'}`}>
+
+            <span
+              className={`availability ${
+                doctor.isAvailable ? "online" : "offline"
+              }`}
+            >
               {doctor.isAvailable ? "Available" : "Busy"}
             </span>
           </div>
 
-          <button 
-            className="btn-book" 
+          <button
+            className="btn-book"
             onClick={() => navigate(`/book-appointment/${doctor.id}`)}
           >
             Book Appointment
@@ -97,25 +134,31 @@ const Doctors: React.FC = () => {
         <h2>Verified Specialists</h2>
         <p>Browse through our network of certified medical professionals.</p>
       </div>
-      {loading && (
-        <div className="loading-banner">
-          Loading doctors, please wait...
+
+      {loading && page === 1 && (
+        <div className="loading-banner">Loading doctors...</div>
+      )}
+
+      {doctors.length > 0 && (
+        <div className="virtual-list-container">
+          <AutoSizer>
+            {({ height, width }) => (
+              <List
+                width={width}
+                height={height}
+                rowCount={doctors.length}
+                rowHeight={130}
+                rowRenderer={rowRenderer}
+                overscanRowCount={3}
+              />
+            )}
+          </AutoSizer>
         </div>
       )}
 
-      {doctors.length > 0 && <div className="virtual-list-container">
-        <AutoSizer>
-          {({ height, width }) => (
-            <List
-              width={width}
-              height={height}
-              rowCount={doctors.length}
-              rowHeight={130} 
-              rowRenderer={rowRenderer}
-            />
-          )}
-        </AutoSizer>
-      </div>}
+      {loading && page > 1 && (
+        <div className="loading-banner">Loading more doctors...</div>
+      )}
     </div>
   );
 };

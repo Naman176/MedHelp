@@ -9,6 +9,7 @@ import { Admin, Protected, Public } from "./middleware/route";
 import { setUserInfo } from "./redux/reducers/rootSlice";
 import { getUserInfo } from "./redux/selectors/rootSelectors";
 import type { UserInfo } from "./types";
+import { useNotifications } from "./hooks/useNotifications";
 
 import Layout from "./components/Layout";
 import Dashboard from "./components/Dashboard";
@@ -25,11 +26,12 @@ import { useGetMeQuery } from "./redux/services/authApi";
 import AllUsers from "./components/AllUsers";
 
 const GOOGLE_CLIENT_ID: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-
+console.log('gci', GOOGLE_CLIENT_ID)
 const App: React.FC = () => {
   const dispatch = useDispatch();
   const userInfo = useSelector(getUserInfo) as UserInfo | null; 
   const token = localStorage.getItem("token")
+  useNotifications(token);
   const isLoggedIn: boolean =  token ? true : false;
 
   const { data: userDetails, isLoading, isError } = useGetMeQuery(undefined, {

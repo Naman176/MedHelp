@@ -1,0 +1,45 @@
+.notification-wrapper {
+  position: relative;
+}
+
+.notif-dropdown {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  width: 320px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  z-index: 100;
+}
+
+.notif-item {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.notif-item.unread {
+  background: #f2f7ff;
+}
+
+.notif-title {
+  font-weight: 600;
+}
+
+.notif-message {
+  font-size: 14px;
+}
+
+.notif-time {
+  font-size: 11px;
+  color: gray;
+}
+
+.notif-empty {
+  padding: 15px;
+  text-align: center;
+}

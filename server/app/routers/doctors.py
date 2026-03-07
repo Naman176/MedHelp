@@ -83,7 +83,7 @@ async def apply_for_doctor(
             db=db,
             user_id=admin.id,
             title="New Doctor Application",
-            message=f"{current_user.name} has applied to be a {specialization}. Please review their credentials.",
+            message=f"{current_user.full_name} has applied to be a {specialization}. Please review their credentials.",
             notification_type="INFO"
         )
         

@@ -17,6 +17,7 @@ from app.schemas.appointment import AppointmentCreate
 from app.schemas.appointment import AppointmentResponse, AppointmentUpdate
 from app.services.notification import send_notification
 from app.services.video import create_video_room
+from app.dependencies import verify_doctor
 
 router = APIRouter()
 
@@ -216,7 +217,33 @@ async def get_my_appointments(
             .order_by(desc(Appointment.appointment_date), desc(Appointment.appointment_time))
         )
         return query.scalars().all()
-    
+
+# Get All Unapproved Appointments for Doctor
+@router.get("/pendingAppointments", response_model=List[AppointmentResponse])
+async def get_my_pending_appointments(
+    current_user: User = Depends(verify_doctor),
+    db: AsyncSession = Depends(get_db)
+):
+    query_doctor = await db.execute(
+        select(Doctor).where(Doctor.user_id == current_user.id)
+    )
+    doctor = query_doctor.scalars().first()
+
+    if not doctor:
+        return []
+
+    query = await db.execute(
+        select(Appointment)
+        .where(Appointment.doctor_id == doctor.id)
+        .where(Appointment.status == "PENDING")
+        .options(
+            selectinload(Appointment.patient)  # so frontend can show patient info
+        )
+        .order_by(desc(Appointment.appointment_date), desc(Appointment.appointment_time))
+    )
+
+    return query.scalars().all()
+
 # Update Appointment Status
 @router.put("/{appointment_id}/status", response_model=AppointmentResponse)
 async def update_appointment_status(

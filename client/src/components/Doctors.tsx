@@ -20,6 +20,48 @@ const Doctors: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [nameQuery, setNameQuery] = useState("");
+  const [specializationQuery, setSpecializationQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  
+  const searchDoctors = async () => {
+    try {
+      setSearching(true);
+      dispatch(setDoctors([])); // clear current doctors
+
+      const params = new URLSearchParams();
+
+      if (nameQuery) params.append("name", nameQuery);
+      if (specializationQuery)
+        params.append("specialization", specializationQuery);
+
+      const response = await fetchData(`/doctors/search?${params.toString()}`);
+
+      const mappedDoctors: Doctor[] = response.map((doc: any) => ({
+        id: doc.id,
+        userId: doc.user_id,
+        specialization: doc.specialization,
+        licenseNumber: doc.license_number,
+        degreeUploadUrl: doc.degree_upload_url,
+        bio: doc.bio,
+        yearsOfExperience: doc.years_of_experience,
+        consultationFee: doc.consultation_fee,
+        isAvailable: doc.is_available,
+        user: {
+          id: doc.user.id,
+          fullName: doc.user.full_name,
+          email: doc.user.email,
+          profilePic: doc.user.profile_pic || doc.user.profilePic
+        }
+      }));
+
+      dispatch(setDoctors(mappedDoctors));
+    } catch (error) {
+      console.error("Search failed", error);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const getDoctorsPage = async (pageToFetch: number) => {
     try {
@@ -138,8 +180,40 @@ const Doctors: React.FC = () => {
       {loading && page === 1 && (
         <div className="loading-banner">Loading doctors...</div>
       )}
+      {searching && (
+        <div className="loading-banner">Searching doctors...</div>
+      )}
+     {/* SEARCH BAR */}
+     <div className="search-bar">
+      <input
+        type="text"
+        placeholder="Search doctor by name..."
+        value={nameQuery}
+        onChange={(e) => setNameQuery(e.target.value)}
+      />
 
-      {doctors.length > 0 && (
+      <input
+        type="text"
+        placeholder="Search by specialization..."
+        value={specializationQuery}
+        onChange={(e) => setSpecializationQuery(e.target.value)}
+      />
+
+      <button onClick={searchDoctors}>Search</button>
+
+      <button
+        onClick={() => {
+          setNameQuery("");
+          setSpecializationQuery("");
+          dispatch(setDoctors([]));
+          getDoctorsPage(1);
+        }}
+      >
+        Reset
+      </button>
+    </div> 
+
+      {!searching && doctors.length > 0 && (
         <div className="virtual-list-container">
           <AutoSizer>
             {({ height, width }) => (

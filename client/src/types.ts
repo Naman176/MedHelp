@@ -70,3 +70,12 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
 }
+
+export interface Appointment {
+  id: string;
+  appointment_date: string;
+  appointment_time: string;
+  patient?: {
+    full_name: string;
+  };
+}

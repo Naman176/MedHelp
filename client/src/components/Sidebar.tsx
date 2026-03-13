@@ -6,6 +6,7 @@ import {
   Users,
   FileText,
   Settings,
+  Clock,
 } from "lucide-react";
 import "../styles/Sidebar.css";
 import { useSelector } from "react-redux";
@@ -20,6 +21,7 @@ interface NavItem {
 const Sidebar: React.FC = () => {
   const userInfo = useSelector(getUserInfo);
   let applyAsDoctor = null;
+  let doctorSidebarRoutes = [];
   let adminSidebarRoutes = [];
   if (userInfo?.role !== "doctor") {
     applyAsDoctor = {
@@ -33,6 +35,11 @@ const Sidebar: React.FC = () => {
       {name: "Get All Users", path: "/allUsers", icon: <Users size={20}/>},
     )
   }
+  if(userInfo?.role === "doctor"){
+    doctorSidebarRoutes.push({name: "Approve Appointments", path: "/approveAppointments", icon: <Check size={20}/>},
+      {name: "Set Availability", path: "/setAvailability", icon: <Clock size={20}/>}
+    )
+  }
   const navItems: NavItem[] = [
     {
       name: "Appointments",
@@ -41,7 +48,8 @@ const Sidebar: React.FC = () => {
     },
     { name: "View Doctors", path: "/doctors", icon: <Users size={20} /> },
     ...(applyAsDoctor ? [applyAsDoctor] : []),
-    ...(adminSidebarRoutes ? adminSidebarRoutes : [])
+    ...(adminSidebarRoutes ? adminSidebarRoutes : []),
+    ...(doctorSidebarRoutes ? doctorSidebarRoutes : [])
   ];
 
   return (

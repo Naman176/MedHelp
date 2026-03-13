@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { Toaster } from "react-hot-toast";
 
-import { Admin, Protected, Public } from "./middleware/route"; 
+import { Admin, DoctorOnly, Protected, Public } from "./middleware/route"; 
 import { setUserInfo } from "./redux/reducers/rootSlice";
 import { getUserInfo } from "./redux/selectors/rootSelectors";
 import type { UserInfo } from "./types";
@@ -24,6 +24,8 @@ import ApplyAsDoctor from "./components/ApplyAsDoctor";
 import ReviewDoctors from "./components/ReviewDoctors";
 import { useGetMeQuery } from "./redux/services/authApi";
 import AllUsers from "./components/AllUsers";
+import { PendingAppointments } from "./components/PendingAppointments";
+import { SetAvailability } from "./components/SetAvailability";
 
 const GOOGLE_CLIENT_ID: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 console.log('gci', GOOGLE_CLIENT_ID)
@@ -95,6 +97,16 @@ const App: React.FC = () => {
                 <Admin>
                   <AllUsers/>
                 </Admin>
+              } />
+              <Route path="/approveAppointments" element={
+                <DoctorOnly>
+                  <PendingAppointments/>
+                </DoctorOnly>
+              } />
+               <Route path="/setAvailability" element={
+                <DoctorOnly>
+                  <SetAvailability/>
+                </DoctorOnly>
               } />
             </Routes>
           </Layout>

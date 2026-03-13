@@ -48,3 +48,15 @@ def verify_admin(current_user: User = Depends(get_current_user)) -> User:
             detail="Access denied. Admin privileges required."
         )
     return current_user
+
+
+def verify_doctor(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Dependency to ensure the current user has the 'admin' role.
+    """
+    if current_user.role != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Access denied. Admin privileges required."
+        )
+    return current_user

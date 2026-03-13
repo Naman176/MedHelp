@@ -1,0 +1,82 @@
+.pending-container {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.pending-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.appointment-card {
+  background: white;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 16px;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+  transition: transform 0.15s ease;
+}
+
+.appointment-card:hover {
+  transform: translateY(-2px);
+}
+
+.appointment-row {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.appointment-label {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.appointment-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.approve-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.approve-button:hover {
+  background: #256628;
+}
+
+.reject-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #c62828;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.reject-button:hover {
+  background: #a91f1f;
+}
+
+.approving-text {
+  margin-top: 10px;
+  color: #888;
+  font-style: italic;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  margin-top: 40px;
+  color: #666;
+}

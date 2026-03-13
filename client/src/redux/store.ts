@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import rootReducer from "./reducers/rootSlice";
 import notificationsReducer from './reducers/notificationsSlice'
+import pendingAppointments from './reducers/pendingAppointmentSlice'
 import { authApi } from "./services/authApi";
 
 export const store = configureStore({
   reducer: {
     notifications: notificationsReducer,
+    pendingAppointments: pendingAppointments,
     root: rootReducer,
     [authApi.reducerPath]: authApi.reducer,
   },

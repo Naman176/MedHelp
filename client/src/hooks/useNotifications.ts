@@ -5,6 +5,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { addNotification, setNotifications } from "../redux/reducers/notificationsSlice";
 import type { RootState } from "../redux/store";
 import type { Notification } from "../types";
+import fetchData from "../helper/apiCall";
+import { setPendingAppointments } from "../redux/reducers/pendingAppointmentSlice";
 
 const API_URL = import.meta.env.VITE_SERVER_DOMAIN;
 const WS_URL = "ws://localhost:8000/notifications/ws";
@@ -51,10 +53,13 @@ export const useNotifications = (token: string | null) => {
 
     const ws = new WebSocket(`${WS_URL}/${userId}`);
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
        const notif: Notification = JSON.parse(event.data);
         dispatch(addNotification(notif));
-
+        if (notif.title === "New Booking Request") {
+          const res = await fetchData("/appointments/pendingAppointments");
+          dispatch(setPendingAppointments(res));
+        }
         const updated = [notif, ...JSON.parse(localStorage.getItem("notifications") || "[]")];
         localStorage.setItem("notifications", JSON.stringify(updated));
     };

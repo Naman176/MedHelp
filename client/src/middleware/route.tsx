@@ -18,6 +18,21 @@ export const Protected = ({ children }: Props) => {
   return <>{children}</>;
 };
 
+export const DoctorOnly = ({children}: Props )=>{ 
+  const userInfo = useSelector(getUserInfo);
+  if (!userInfo) {
+      return <Navigate to="/" replace />;
+    }
+
+    const userRole = userInfo.role;
+
+    if (userRole === "doctor") {
+      return <>{children}</>;
+    }
+
+    return <Navigate to="/" replace />;
+};
+
 export const Public = ({ children }: Props) => {
   const userInfo = useSelector(getUserInfo);
 

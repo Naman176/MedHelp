@@ -2,8 +2,53 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.routers import users, auth, doctors, appointments, admin, notifications
 from fastapi.middleware.cors import CORSMiddleware
+from app.chatbot import router as chatbot_router
+from contextlib import asynccontextmanager
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from app.chatbot.agent.graph import build_graph
 
-app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
+
+def get_langgraph_db_url() -> str:
+    """
+    Convert the existing SQLAlchemy asyncpg URL into a Psycopg-compatible
+    URL for LangGraph's AsyncPostgresSaver.
+
+    Original app DB URL:
+        postgresql+asyncpg://...
+
+    LangGraph/PostgresSaver DB URL:
+        postgresql://...
+    """
+    url = settings.DATABASE_URL
+
+    if url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+
+    elif url.startswith("postgres+asyncpg://"):
+        url = url.replace("postgres+asyncpg://", "postgresql://", 1)
+
+    # Neon requires SSL for remote Postgres connections.
+    # Add SSL params only to the derived LangGraph URL, not to settings.DATABASE_URL.
+    if "sslmode=" not in url:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}sslmode=require&channel_binding=require"
+
+    return url
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    langgraph_db_url = get_langgraph_db_url()
+
+    async with AsyncPostgresSaver.from_conn_string(langgraph_db_url) as checkpointer:
+        await checkpointer.setup()
+        app.state.chatbot_graph = build_graph(checkpointer)
+
+        yield
+
+        app.state.chatbot_graph = None
+
+
+app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION, lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # frontend origin
@@ -18,6 +63,7 @@ app.include_router(doctors.router, prefix="/doctors", tags=["Doctors"])
 app.include_router(appointments.router, prefix="/appointments", tags=["Appointments"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
+app.include_router(chatbot_router.router, prefix="/chatbot", tags=["Chatbot"])
 
 @app.get("/health")
 def health():

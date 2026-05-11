@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     DAILY_API_KEY: str
     GOOGLE_CLIENT_ID: str
 
+    GROQ_API_KEY: str
+
     class Config:
         env_file = ".env"
 

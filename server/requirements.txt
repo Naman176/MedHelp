@@ -28,3 +28,14 @@ cloudinary
 
 # Video Call
 httpx
+
+# GenAI
+langchain
+langchain_community
+langgraph
+langchain-groq
+sse-starlette
+langgraph-checkpoint-sqlite
+aiosqlite
+langgraph-checkpoint-postgres
+psycopg[binary,pool]

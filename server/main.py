@@ -6,6 +6,8 @@ from app.chatbot import router as chatbot_router
 from contextlib import asynccontextmanager
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from app.chatbot.agent.graph import build_graph
+from psycopg.rows import dict_row
+from psycopg_pool import AsyncConnectionPool
 
 
 def get_langgraph_db_url() -> str:
@@ -38,15 +40,31 @@ def get_langgraph_db_url() -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     langgraph_db_url = get_langgraph_db_url()
+    connection_kwargs = {
+        "autocommit": True,
+        "prepare_threshold": 0,
+        "row_factory": dict_row,
+    }
 
-    async with AsyncPostgresSaver.from_conn_string(langgraph_db_url) as checkpointer:
-        await checkpointer.setup()
-        app.state.chatbot_graph = build_graph(checkpointer)
+    pool = AsyncConnectionPool(
+        conninfo=langgraph_db_url,
+        min_size=1,
+        max_size=5,
+        kwargs=connection_kwargs,
+        open=False,
+    )
 
+    await pool.open()
+
+    checkpointer = AsyncPostgresSaver(pool)
+    await checkpointer.setup()
+
+    app.state.chatbot_graph = build_graph(checkpointer)
+    try:
         yield
-
+    finally:
         app.state.chatbot_graph = None
-
+        await pool.close()
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION, lifespan=lifespan)
 app.add_middleware(

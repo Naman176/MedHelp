@@ -20,6 +20,8 @@ class Settings(BaseSettings):
 
     GROQ_API_KEY: str
 
+    HF_TOKEN: str
+
     class Config:
         env_file = ".env"
 

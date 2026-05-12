@@ -1,0 +1,162 @@
+[
+  {
+    "id": "cardiology_chest_pain_shortness_breath",
+    "symptoms": "chest pain chest pressure chest tightness shortness of breath breathlessness pain during walking pain during exercise left arm pain jaw pain sweating palpitations",
+    "specialist": "cardiologist",
+    "reason": "Chest discomfort with shortness of breath or exertional symptoms can involve the heart and should be evaluated by a heart specialist.",
+    "urgency": "emergency",
+    "red_flags": "chest pain with shortness of breath, crushing chest pressure, fainting, sweating, pain spreading to arm or jaw"
+  },
+  {
+    "id": "neurology_stroke_warning_signs",
+    "symptoms": "face drooping arm weakness speech difficulty slurred speech sudden confusion sudden vision loss sudden severe headache one sided weakness numbness trouble walking",
+    "specialist": "emergency physician",
+    "reason": "Sudden weakness, speech difficulty, or facial drooping can be signs of stroke and need emergency evaluation immediately.",
+    "urgency": "emergency",
+    "red_flags": "face drooping, arm weakness, speech trouble, sudden one-sided numbness, sudden severe headache"
+  },
+  {
+    "id": "pulmonology_breathing_wheezing",
+    "symptoms": "wheezing cough shortness of breath asthma breathing difficulty chest tightness cough at night breathing problem after exercise",
+    "specialist": "pulmonologist",
+    "reason": "Wheezing, asthma-like symptoms, and recurring breathing difficulty are commonly evaluated by a lung specialist.",
+    "urgency": "soon",
+    "red_flags": "severe breathing difficulty, blue lips, inability to speak full sentences, chest pain with breathing trouble"
+  },
+  {
+    "id": "dermatology_rash_itching",
+    "symptoms": "skin rash itching redness hives dry skin eczema acne pimples skin allergy patches swelling skin irritation",
+    "specialist": "dermatologist",
+    "reason": "Rashes, itching, acne, eczema-like symptoms, and skin irritation are usually evaluated by a skin specialist.",
+    "urgency": "routine",
+    "red_flags": "rash with breathing difficulty, rapidly spreading rash, fever with rash, swelling of lips or face"
+  },
+  {
+    "id": "gastroenterology_abdominal_pain",
+    "symptoms": "stomach pain abdominal pain acidity heartburn vomiting nausea bloating constipation diarrhea indigestion gastric reflux burning stomach",
+    "specialist": "gastroenterologist",
+    "reason": "Persistent stomach pain, acidity, vomiting, diarrhea, constipation, or reflux symptoms are commonly handled by a digestive system specialist.",
+    "urgency": "routine",
+    "red_flags": "vomiting blood, black stools, severe abdominal pain, persistent vomiting, unexplained weight loss"
+  },
+  {
+    "id": "orthopedic_back_joint_pain",
+    "symptoms": "back pain neck pain knee pain shoulder pain joint pain fracture sprain bone pain muscle injury sports injury difficulty walking",
+    "specialist": "orthopedic surgeon",
+    "reason": "Bone, joint, back, neck, fracture, sprain, and movement-related problems are commonly evaluated by an orthopedic specialist.",
+    "urgency": "routine",
+    "red_flags": "loss of bladder control with back pain, severe injury, visible deformity, inability to walk"
+  },
+  {
+    "id": "rheumatology_joint_swelling_stiffness",
+    "symptoms": "joint swelling morning stiffness arthritis multiple joint pain autoimmune pain swollen fingers chronic joint inflammation",
+    "specialist": "rheumatologist",
+    "reason": "Multiple swollen or stiff joints, especially morning stiffness, can suggest inflammatory or autoimmune joint conditions.",
+    "urgency": "routine",
+    "red_flags": "severe swelling with fever, sudden hot painful joint, inability to move joint"
+  },
+  {
+    "id": "endocrinology_diabetes_thyroid",
+    "symptoms": "excessive thirst frequent urination unexplained weight loss diabetes high sugar low sugar thyroid weight gain weight loss heat intolerance cold intolerance",
+    "specialist": "endocrinologist",
+    "reason": "Diabetes symptoms, thyroid symptoms, and hormone-related problems are commonly evaluated by an endocrinologist.",
+    "urgency": "routine",
+    "red_flags": "confusion with very high sugar, fainting, severe dehydration, very low sugar symptoms"
+  },
+  {
+    "id": "urology_urinary_symptoms",
+    "symptoms": "burning urination frequent urination urine pain blood in urine kidney stone groin pain prostate urinary infection bladder pain",
+    "specialist": "urologist",
+    "reason": "Urinary burning, blood in urine, kidney stone symptoms, bladder pain, or prostate-related symptoms are commonly evaluated by a urologist.",
+    "urgency": "soon",
+    "red_flags": "fever with flank pain, inability to urinate, severe kidney stone pain, blood in urine"
+  },
+  {
+    "id": "gynecology_womens_health",
+    "symptoms": "irregular periods menstrual pain heavy bleeding vaginal discharge pelvic pain pregnancy contraception pcos fertility women health",
+    "specialist": "gynecologist",
+    "reason": "Irregular periods, pelvic pain, PCOS, fertility, contraception, and other women’s health concerns are commonly evaluated by a gynecologist.",
+    "urgency": "routine",
+    "red_flags": "heavy bleeding with dizziness, severe pelvic pain, pregnancy with bleeding, pregnancy with severe abdominal pain"
+  },
+  {
+    "id": "pediatrics_child_fever",
+    "symptoms": "child fever baby fever infant cough child vomiting child diarrhea child rash pediatric vaccination child not eating",
+    "specialist": "pediatrician",
+    "reason": "Health problems in babies, children, and adolescents are commonly handled by a pediatrician.",
+    "urgency": "soon",
+    "red_flags": "baby under 3 months with fever, difficulty breathing, dehydration, seizure, child unusually sleepy"
+  },
+  {
+    "id": "ent_ear_nose_throat",
+    "symptoms": "ear pain throat pain sore throat sinus blocked nose runny nose hearing loss tonsils voice change nose bleeding dizziness vertigo",
+    "specialist": "ENT specialist",
+    "reason": "Ear, nose, throat, sinus, tonsil, hearing, and voice-related symptoms are commonly evaluated by an ENT specialist.",
+    "urgency": "routine",
+    "red_flags": "difficulty breathing, severe throat swelling, sudden hearing loss, heavy nose bleeding"
+  },
+  {
+    "id": "ophthalmology_eye_symptoms",
+    "symptoms": "eye pain red eye blurry vision vision loss itchy eyes watery eyes eye infection headache with vision eye injury",
+    "specialist": "ophthalmologist",
+    "reason": "Eye pain, red eye, vision changes, eye infections, and eye injuries should be evaluated by an eye specialist.",
+    "urgency": "soon",
+    "red_flags": "sudden vision loss, severe eye pain, eye injury, flashes of light with vision loss"
+  },
+  {
+    "id": "psychiatry_anxiety_depression",
+    "symptoms": "anxiety panic attacks depression sadness stress insomnia mood swings hopelessness fear racing thoughts mental health",
+    "specialist": "psychiatrist",
+    "reason": "Anxiety, depression, panic attacks, sleep problems, and mood concerns can be evaluated by a mental health specialist.",
+    "urgency": "routine",
+    "red_flags": "suicidal thoughts, self harm thoughts, thoughts of harming others, severe confusion"
+  },
+  {
+    "id": "dentistry_tooth_pain",
+    "symptoms": "tooth pain toothache gum pain bleeding gums cavity dental pain bad breath swollen gums wisdom tooth jaw pain while chewing",
+    "specialist": "dentist",
+    "reason": "Tooth pain, gum problems, cavities, wisdom tooth issues, and dental infections are commonly handled by a dentist.",
+    "urgency": "routine",
+    "red_flags": "facial swelling, fever with tooth infection, difficulty swallowing, difficulty breathing"
+  },
+  {
+    "id": "allergy_anaphylaxis",
+    "symptoms": "allergic reaction hives swelling lips swelling face breathing difficulty after food after medicine anaphylaxis severe allergy",
+    "specialist": "emergency physician",
+    "reason": "Allergic reactions with facial swelling or breathing difficulty can be life-threatening and need emergency care.",
+    "urgency": "emergency",
+    "red_flags": "breathing difficulty, swelling of lips or tongue, fainting, widespread hives after food or medicine"
+  },
+  {
+    "id": "neurology_headache_migraine",
+    "symptoms": "headache migraine severe headache dizziness numbness tingling seizures fainting memory problems tremors nerve pain",
+    "specialist": "neurologist",
+    "reason": "Migraines, seizures, nerve pain, numbness, dizziness, and neurological symptoms are commonly evaluated by a neurologist.",
+    "urgency": "routine",
+    "red_flags": "sudden worst headache, headache with weakness, seizure, confusion, head injury"
+  },
+  {
+    "id": "nephrology_kidney_swelling",
+    "symptoms": "kidney problem swelling legs foamy urine high creatinine reduced urine kidney disease protein urine high blood pressure kidney",
+    "specialist": "nephrologist",
+    "reason": "Kidney function problems, foamy urine, swelling, reduced urination, or high creatinine are commonly evaluated by a kidney specialist.",
+    "urgency": "soon",
+    "red_flags": "very low urine output, severe swelling with breathing difficulty, confusion, severe weakness"
+  },
+  {
+    "id": "general_fever_cold_flu",
+    "symptoms": "fever cold cough flu body ache sore throat mild headache tiredness viral infection common cold",
+    "specialist": "general physician",
+    "reason": "Common fever, cold, cough, body ache, and mild flu-like symptoms can usually start with a general physician.",
+    "urgency": "routine",
+    "red_flags": "very high fever, breathing difficulty, confusion, chest pain, dehydration"
+  },
+  {
+    "id": "emergency_severe_bleeding_injury",
+    "symptoms": "severe bleeding uncontrolled bleeding deep wound accident trauma head injury unconscious fainting severe burn",
+    "specialist": "emergency physician",
+    "reason": "Severe bleeding, major injury, loss of consciousness, or serious trauma requires emergency medical attention.",
+    "urgency": "emergency",
+    "red_flags": "uncontrolled bleeding, unconsciousness, severe head injury, severe burn, major accident"
+  }
+]

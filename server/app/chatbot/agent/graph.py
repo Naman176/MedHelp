@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated, Literal
+import asyncio
 from typing_extensions import TypedDict
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_groq import ChatGroq
@@ -7,11 +8,17 @@ from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from app.chatbot.tools.db_tools import get_available_doctors, list_specializations
 from app.core.config import settings
+from app.chatbot.rag.retriever import hybrid_search, format_rag_context
 
 
 # TypedDict defines what gets stored and carried across every turn of the conversation.
 # LangGraph persists this to SQLite automatically. Every node reads from and writes to this shared state.
 # LangGraph persists this to SQLite after every node using the thread_id as the key — so memory works across turns.
+
+# This tells LangGraph: If new recommended_specialist is empty, keep the old one.
+def keep_non_empty_specialist(old: str | None, new: str | None) -> str:
+    return new or old or ""
+
 class MedHelpState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
@@ -19,7 +26,7 @@ class MedHelpState(TypedDict):
     phase: Literal["symptom", "booking", "general"]
 
     # Specialist the bot recommended carried forward so booking phase knows what to search.
-    recommended_specialist: str
+    recommended_specialist: Annotated[str, keep_non_empty_specialist]
 
     user_id: str
     user_name: str
@@ -85,10 +92,16 @@ Rules:
 - Never diagnose — only recommend which specialist to see
 - Always remind the user you are an AI assistant, not a doctor
 - Keep responses concise — do not overwhelm with too much information at once
+- You may receive "Medical knowledge base context" from the RAG system. Use it as guidance for specialist recommendation.
+- If the knowledge context marks urgency as emergency, tell the user to seek emergency medical care immediately or contact 
+  local emergency services.
+- Emergency examples include chest pain with shortness of breath, stroke-like symptoms, severe breathing difficulty,  
+  fainting, severe allergic reaction, uncontrolled bleeding, severe head injury, suicidal thoughts, or sudden severe pain.
 - If the user says they want to find a doctor, 
   end your response with: SPECIALIST: <specialist_name>
   Example: SPECIALIST: cardiologist
-- If user ask you to book the appointment directly, tell the user you can't do direct booking, but you can help them find available doctors and their available slots
+- If user ask you to book the appointment directly, tell the user you can't do direct booking, but you can help them find 
+  available doctors and their available slots
 """
 
 
@@ -205,8 +218,32 @@ async def symptom_node(state: MedHelpState) -> MedHelpState:
     messages = state["messages"]
     user_name = state.get("user_name", "")
 
+    # Get latest user message for RAG search
+    latest_human = next(
+        (m for m in reversed(messages) if isinstance(m, HumanMessage)),
+        None
+    )
+
+    rag_context = ""
+    if latest_human and latest_human.content:
+        try:
+            # Run retrieval in a thread so embedding/vector search does not block the event loop.
+            rag_results = await asyncio.to_thread(
+                hybrid_search,
+                str(latest_human.content),
+                3
+            )
+            rag_context = format_rag_context(rag_results)
+        except Exception:
+            # RAG should never break the chatbot. If retrieval fails,
+            # the LLM will answer using the normal symptom prompt.
+            rag_context = ""
+
     # Personalize system prompt if we have the user's name
     personalized_prompt = SYMPTOM_PROMPT
+    if rag_context:
+        personalized_prompt += f"\n\n{rag_context}"
+
     if user_name:
         personalized_prompt += f"\n\nThe user's name is {user_name}. Address them by name occasionally to make the conversation personal."
 

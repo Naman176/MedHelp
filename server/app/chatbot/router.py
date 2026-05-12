@@ -54,38 +54,36 @@ async def chat_stream(
 
     async def generate():
         try:
-                config = {
-                    "configurable": {
-                        "thread_id": thread_key
-                    }
+            config = {
+                "configurable": {
+                    "thread_id": thread_key
                 }
-                input_state = {
-                    "messages": [HumanMessage(content=chat_request.message)],
-                    "phase": "general",
-                    "recommended_specialist": "",
-                    "user_id": str(current_user.id),
-                    "user_name": current_user.full_name,
-                }
-                async for event in graph.astream_events(
-                    input_state,
-                    config=config,
-                    version="v2"
-                ):
-                    kind = event["event"]
-                    if kind == "on_chat_model_stream":
-                        chunk = event["data"]["chunk"]
-                        if chunk.content:
-                            yield {
-                                "event": "message",
-                                "data": json.dumps({
-                                    "token": chunk.content,
-                                    "done": False
-                                })
-                            }
-                yield {
-                    "event": "message",
-                    "data": json.dumps({"token": "", "done": True})
-                }
+            }
+            input_state = {
+                "messages": [HumanMessage(content=chat_request.message)],
+                "user_id": user_id,
+                "user_name": user_name,
+            }
+            async for event in graph.astream_events(
+                input_state,
+                config=config,
+                version="v2"
+            ):
+                kind = event["event"]
+                if kind == "on_chat_model_stream":
+                    chunk = event["data"]["chunk"]
+                    if chunk.content:
+                        yield {
+                            "event": "message",
+                            "data": json.dumps({
+                                "token": chunk.content,
+                                "done": False
+                            })
+                        }
+            yield {
+                "event": "message",
+                "data": json.dumps({"token": "", "done": True})
+            }
 
 
         except Exception as e:
@@ -120,43 +118,41 @@ async def chat_simple(
             → Bot should directly search for dentists on those two days.
     """
     try:
-            graph = get_chatbot_graph(fastapi_request)
+        graph = get_chatbot_graph(fastapi_request)
 
-            user_id = str(current_user.id)
-            user_name = current_user.full_name or ""
+        user_id = str(current_user.id)
+        user_name = current_user.full_name or ""
 
             # Important: scope memory to the logged-in user
-            thread_key = f"user:{user_id}:thread:{chat_request.thread_id}"
+        thread_key = f"user:{user_id}:thread:{chat_request.thread_id}"
 
-            config = {"configurable": {"thread_id": thread_key}}
+        config = {"configurable": {"thread_id": thread_key}}
 
-            input_state = {
-                "messages": [HumanMessage(content=chat_request.message)],
-                "phase": "general",
-                "recommended_specialist": "",
-                "user_id": str(current_user.id),
-                "user_name": current_user.full_name,
-            }
+        input_state = {
+            "messages": [HumanMessage(content=chat_request.message)],
+            "user_id": user_id,
+            "user_name": user_name,
+        }
 
-            result = await graph.ainvoke(input_state, config=config)
+        result = await graph.ainvoke(input_state, config=config)
 
-            ai_messages = [
-                m for m in result["messages"]
-                if hasattr(m, "content")
-                and not isinstance(m, HumanMessage)
-                and m.__class__.__name__ != "ToolMessage"
-                and m.content
-            ]
+        ai_messages = [
+            m for m in result["messages"]
+            if hasattr(m, "content")
+            and not isinstance(m, HumanMessage)
+            and m.__class__.__name__ != "ToolMessage"
+            and m.content
+        ]
 
-            last_response = ai_messages[-1].content if ai_messages else "No response generated."
+        last_response = ai_messages[-1].content if ai_messages else "No response generated."
 
-            return {
-                "response": last_response,
-                "thread_id": chat_request.thread_id,
-                "phase_detected": result.get("phase"),
-                "recommended_specialist": result.get("recommended_specialist", ""),
-                "user": current_user.full_name,
-            }
+        return {
+            "response": last_response,
+            "thread_id": chat_request.thread_id,
+            "phase_detected": result.get("phase"),
+            "recommended_specialist": result.get("recommended_specialist", ""),
+            "user": current_user.full_name,
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

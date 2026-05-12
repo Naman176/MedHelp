@@ -39,3 +39,6 @@ langgraph-checkpoint-sqlite
 aiosqlite
 langgraph-checkpoint-postgres
 psycopg[binary,pool]
+rank-bm25
+chromadb
+sentence-transformers

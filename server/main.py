@@ -8,34 +8,9 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from app.chatbot.agent.graph import build_graph
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
+import asyncio
+from app.core.database import get_langgraph_db_url, keep_db_alive
 
-
-def get_langgraph_db_url() -> str:
-    """
-    Convert the existing SQLAlchemy asyncpg URL into a Psycopg-compatible
-    URL for LangGraph's AsyncPostgresSaver.
-
-    Original app DB URL:
-        postgresql+asyncpg://...
-
-    LangGraph/PostgresSaver DB URL:
-        postgresql://...
-    """
-    url = settings.DATABASE_URL
-
-    if url.startswith("postgresql+asyncpg://"):
-        url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
-
-    elif url.startswith("postgres+asyncpg://"):
-        url = url.replace("postgres+asyncpg://", "postgresql://", 1)
-
-    # Neon requires SSL for remote Postgres connections.
-    # Add SSL params only to the derived LangGraph URL, not to settings.DATABASE_URL.
-    if "sslmode=" not in url:
-        separator = "&" if "?" in url else "?"
-        url = f"{url}{separator}sslmode=require&channel_binding=require"
-
-    return url
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,9 +35,17 @@ async def lifespan(app: FastAPI):
     await checkpointer.setup()
 
     app.state.chatbot_graph = build_graph(checkpointer)
+
+    keepalive_task = asyncio.create_task(keep_db_alive(pool))
+
     try:
         yield
     finally:
+        keepalive_task.cancel()
+        try:
+            await keepalive_task
+        except asyncio.CancelledError:
+            pass
         app.state.chatbot_graph = None
         await pool.close()
 

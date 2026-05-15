@@ -42,3 +42,5 @@ psycopg[binary,pool]
 rank-bm25
 chromadb
 sentence-transformers
+mcp
+langchain-mcp-adapters

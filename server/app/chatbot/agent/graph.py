@@ -9,6 +9,7 @@ from langgraph.graph.message import add_messages
 from app.chatbot.tools.db_tools import get_available_doctors, list_specializations
 from app.core.config import settings
 from app.chatbot.rag.retriever import hybrid_search, format_rag_context
+from app.chatbot.mcp.mcp_client import get_mcp_client
 
 
 # TypedDict defines what gets stored and carried across every turn of the conversation.
@@ -75,6 +76,8 @@ Examples:
 "thank you" → general
 "I have a fever, who should I consult?" → symptom
 "show me dentists on tuesday, wednesday and thursday" → booking
+"what specialties do you have?" → booking
+"what doctors are available?" → booking
 """
 
 
@@ -158,9 +161,9 @@ Keep responses short, friendly, and helpful.
 
 SPECIALIST_EXTRACT_PROMPT = """Extract the medical specialist type from the text below.
 
-Return ONLY the list of specialist types in lowercase.
+Return ONLY specialist type in lowercase.
 Examples of valid responses: cardiologist, dermatologist, orthopedic surgeon, neurologist, general physician, psychiatrist, ophthalmologist...
-If no specific specialists iare mentioned or recommended, return exactly: none
+If no specific specialists are mentioned or recommended, return exactly: none
 No explanation. No punctuation. Just the specialist type or the word none.
 """
 
@@ -297,16 +300,17 @@ async def extract_specialist_from_text(response_text: str, existing_specialist: 
 # Booking node
 async def booking_node(state: MedHelpState) -> MedHelpState:
     """
-    Handles doctor search. Uses llm_with_tools so the LLM can call
-    get_available_doctors or list_specializations against the DB.
- 
-    Two-call pattern per tool use:
-      Call 1: LLM decides which tool to call and extracts arguments
-      Tool:   Runs against your PostgreSQL database
-      Call 2: LLM composes a natural language response from DB results
- 
-    Also handles the case where user jumps directly to booking
-    without going through the symptom phase first.
+    Handles doctor search using MCP tools via the MCP server.
+    Flow:
+        1. Connect to MCP server via MultiServerMCPClient
+        2. Load tools from MCP server (get_available_doctors, list_specializations)
+        3. Bind tools to LLM
+        4. LLM decides which tool to call and with what args
+        5. Tool executes via MCP server → doctor_service.py → PostgreSQL
+        6. LLM composes natural language response from tool results
+
+    Falls back to direct Python tools if MCP server is unavailable.
+    This ensures the chatbot keeps working even if MCP server is down.
     """
 
     messages = state["messages"]
@@ -317,7 +321,7 @@ async def booking_node(state: MedHelpState) -> MedHelpState:
     date_context = (
         f"\n\nCurrent server date: {today.strftime('%Y-%m-%d')}."
         f"\nCurrent day of week: {today.strftime('%A')}."
-        "\nUse this when resolving words like tomorrow, today, weekend, and weekdays."
+        "\nUse this when resolving words like tomorrow, today, day after tomorrow, weekend, and weekdays."
     )
 
     # If we already know the specialist from a previous turn,
@@ -346,9 +350,70 @@ async def booking_node(state: MedHelpState) -> MedHelpState:
         *messages
     ]
 
+    # Try MCP Path
+    active_tools = None
+    mcp_available = False
+
+    try:
+            client = get_mcp_client()
+
+            mcp_tools = await client.get_tools()
+
+            if mcp_tools:
+                active_tools = mcp_tools
+                mcp_available = True
+
+                # Bind MCP tools to LLM for this request
+                llm_with_active_tools = llm.bind_tools(active_tools)
+
+                # First LLM call — decide which tool to call
+                response = await llm_with_active_tools.ainvoke(prompt_messages)
+
+                if response.tool_calls:
+                    tool_messages = []
+
+                    for tool_call in response.tool_calls:
+                        # Find matching MCP tool by name
+                        matching_tool = next(
+                            (t for t in active_tools if t.name == tool_call["name"]),
+                            None
+                        )
+                        if matching_tool:
+                            # This call goes through MCP client → MCP server → DB
+                            result = await matching_tool.ainvoke(tool_call["args"])
+                            tool_messages.append(
+                                ToolMessage(
+                                    content=result if isinstance(result, str) else str(result),
+                                    tool_call_id=tool_call["id"]
+                                )
+                            )
+
+                    # Second LLM call — compose natural language response
+                    final_prompt = prompt_messages + [response] + tool_messages
+                    final_response = await llm.ainvoke(final_prompt)
+
+                    return {
+                        **state,
+                        "messages": [response, *tool_messages, final_response]
+                    }
+                
+                # LLM responded directly without calling a tool
+                return {**state, "messages": [response]}
+    except Exception as e:
+        # MCP server unavailable or error — fall through to direct tools
+        print(f"[MCP FALLBACK] reason: {e}")
+        mcp_available = False
+
+    # FALLBACK: DIRECT PYTHON TOOLS
+    # Used when MCP server is not running.
+    # Identical logic to the MCP path but uses db_tools.py directly.
+    # This ensures the chatbot always works regardless of MCP server state.
+    active_tools = tools
+    llm_with_active_tools = llm_with_tools
+
     # First LLM call — LLM decides: call a tool, or respond directly
     # Response is an AIMessage with either .content (text) or .tool_calls (tool request)
-    response = await llm_with_tools.ainvoke(prompt_messages)
+    response = await llm_with_active_tools.ainvoke(prompt_messages)
 
     # # LLM decided to call one or more tools
     if response.tool_calls:

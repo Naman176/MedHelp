@@ -163,15 +163,14 @@ def _get_vector_store():
     ]
 
 
-    embeddings = model.encode(documents).tolist()
-
-    # upsert makes this safe to run multiple times
-    collection.upsert(
-        ids=ids,
-        documents=documents,
-        metadatas=metadatas,
-        embeddings=embeddings,
-    )
+    if collection.count() == 0:
+        embeddings = model.encode(documents).tolist()
+        collection.upsert(
+            ids=ids,
+            documents=documents,
+            metadatas=metadatas,
+            embeddings=embeddings,
+        )
 
     return collection, model
 

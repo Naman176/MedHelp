@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sse_starlette.sse import EventSourceResponse
 from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from app.core.config import settings
-from app.chatbot.agent.graph import build_graph
 from app.chatbot.models.schemas import ChatRequest
 from app.dependencies import get_current_user
 from app.models.user import User
@@ -123,7 +120,7 @@ async def chat_simple(
         user_id = str(current_user.id)
         user_name = current_user.full_name or ""
 
-            # Important: scope memory to the logged-in user
+        # Important: scope memory to the logged-in user
         thread_key = f"user:{user_id}:thread:{chat_request.thread_id}"
 
         config = {"configurable": {"thread_id": thread_key}}
@@ -153,6 +150,9 @@ async def chat_simple(
             "recommended_specialist": result.get("recommended_specialist", ""),
             "user": current_user.full_name,
         }
+
+    except HTTPException:
+        raise
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

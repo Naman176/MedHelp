@@ -186,11 +186,44 @@ async def router_node(state: MedHelpState) -> MedHelpState:
 
     # No human message found → default to general
     if not last_human:
-        return {**state, "phase": "general"}
+        return {"phase": "general"}
     
+    recent_lines = []
+    for message in messages[-8:]:
+        if(isinstance(message, ToolMessage)):
+            continue
+
+        content = str(message.content).strip()
+
+        if not content:
+            continue
+
+        role = "User" if isinstance(message, HumanMessage) else "Assistant"
+        if len(content) > 500:
+            content = content[:500] + "..."
+
+        recent_lines.append(f"{role}: {content}")
+
+    recent_context = "\n".join(recent_lines)
+    recommended_specialist = state.get("recommended_specialist", "")
+
     routing_messages = [
-        SystemMessage(content=ROUTER_PROMPT),
-        HumanMessage(content=last_human.content)
+        SystemMessage(
+            content=(
+                ROUTER_PROMPT
+                + "\n\nAdditional routing context:"
+                + f"\nKnown recommended specialist: {recommended_specialist or 'none'}"
+                + "\nIf the latest message is a short confirmation like 'yes', 'sure', "
+                  "'okay', or a day like 'Monday'/'tomorrow', and a specialist is known, "
+                  "classify it as booking."
+            )
+        ),
+        HumanMessage(
+            content=(
+                f"Recent conversation:\n{recent_context}\n\n"
+                f"Latest user message:\n{last_human.content}"
+            )
+        ),
     ]
 
     # Fast LLM call — expects exactly one word back
@@ -205,7 +238,7 @@ async def router_node(state: MedHelpState) -> MedHelpState:
     valid_phases = {"symptom", "booking", "general"}
     phase = phase_raw if phase_raw in valid_phases else "general"
  
-    return {**state, "phase": phase}
+    return {"phase": phase}
     
 
 # System node
@@ -260,7 +293,6 @@ async def symptom_node(state: MedHelpState) -> MedHelpState:
     )
 
     return {
-        **state,
         "messages": [response],
         "recommended_specialist": specialist
     }
@@ -393,12 +425,11 @@ async def booking_node(state: MedHelpState) -> MedHelpState:
                     final_response = await llm.ainvoke(final_prompt)
 
                     return {
-                        **state,
                         "messages": [response, *tool_messages, final_response]
                     }
                 
                 # LLM responded directly without calling a tool
-                return {**state, "messages": [response]}
+                return {"messages": [response]}
     except Exception as e:
         # MCP server unavailable or error — fall through to direct tools
         print(f"[MCP FALLBACK] reason: {e}")
@@ -453,14 +484,13 @@ async def booking_node(state: MedHelpState) -> MedHelpState:
         # tool_messages  = the DB results (ToolMessage objects)
         # final_response = the natural language answer the user sees
         return {
-            **state,
             "messages": [response, *tool_messages, final_response]
         }
  
     # ── DIRECT RESPONSE PATH ────────────────────────────────────
     # LLM responded with text directly (e.g. "What day works for you?")
     # No tool call needed — just return the response
-    return {**state, "messages": [response]}
+    return {"messages": [response]}
 
 
 async def general_node(state: MedHelpState) -> MedHelpState:
@@ -481,7 +511,7 @@ async def general_node(state: MedHelpState) -> MedHelpState:
     ]
  
     response = await llm.ainvoke(prompt_messages)
-    return {**state, "messages": [response]}
+    return {"messages": [response]}
 
 
 # Called by LangGraph after router_node runs.

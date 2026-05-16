@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sse_starlette.sse import EventSourceResponse
 from langchain_core.messages import HumanMessage
 from app.chatbot.models.schemas import ChatRequest
 from app.dependencies import get_current_user
 from app.models.user import User
-import json
 
 router = APIRouter()
 
@@ -18,81 +16,6 @@ def get_chatbot_graph(request: Request):
         )
 
     return graph
-
-
-@router.post("/chat/stream")
-async def chat_stream(
-    chat_request: ChatRequest,
-    fastapi_request: Request,
-    current_user: User = Depends(get_current_user)
-):
-    """
-    SSE streaming endpoint. Requires JWT auth.
-
-    Frontend usage:
-        POST /chatbot/chat/stream
-        Headers: Authorization: Bearer <jwt_token>
-                 Content-Type: application/json
-        Body: { "message": "...", "thread_id": "unique-session-id" }
-
-    The frontend should:
-    - Generate a UUID as thread_id when the chat opens
-    - Store it in localStorage so the same conversation continues on refresh
-    - Send it with every message
-    """
-
-    graph = get_chatbot_graph(fastapi_request)
-
-    user_id = str(current_user.id)
-    user_name = current_user.full_name or ""
-
-    # Important: scope memory to the logged-in user
-    thread_key = f"user:{user_id}:thread:{chat_request.thread_id}"
-
-    async def generate():
-        try:
-            config = {
-                "configurable": {
-                    "thread_id": thread_key
-                }
-            }
-            input_state = {
-                "messages": [HumanMessage(content=chat_request.message)],
-                "user_id": user_id,
-                "user_name": user_name,
-            }
-            async for event in graph.astream_events(
-                input_state,
-                config=config,
-                version="v2"
-            ):
-                kind = event["event"]
-                if kind == "on_chat_model_stream":
-                    chunk = event["data"]["chunk"]
-                    if chunk.content:
-                        yield {
-                            "event": "message",
-                            "data": json.dumps({
-                                "token": chunk.content,
-                                "done": False
-                            })
-                        }
-            yield {
-                "event": "message",
-                "data": json.dumps({"token": "", "done": True})
-            }
-
-
-        except Exception as e:
-            yield {
-                "event": "error",
-                "data": json.dumps({"error": str(e)})
-            }
-        finally:
-            # Always send done — ensures frontend loading state is cleared
-            yield {"event": "done", "data": ""}
-
-    return EventSourceResponse(generate())
 
 
 @router.post("/chat")

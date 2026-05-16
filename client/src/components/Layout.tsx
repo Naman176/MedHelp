@@ -3,6 +3,7 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 import type { AuthProps } from "../types";
+import ChatbotWidget from "./ChatbotWidget";
 
 interface LayoutProps extends AuthProps {
   children: React.ReactNode;
@@ -28,6 +29,7 @@ const Layout: React.FC<LayoutProps> = ({
       </div>
 
       <Footer />
+      {isLoggedIn && <ChatbotWidget />}
     </div>
   );
 };

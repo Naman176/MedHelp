@@ -18,8 +18,7 @@ const AllUsers: React.FC = () => {
       // Map API snake_case to frontend camelCase
       const mapped: UserAdminView[] = data.map((user: any) => ({
         id: user.id,
-        firstName: user.firstname,
-        lastName: user.lastname,
+        full_name: user.full_name,
         email: user.email,
         role: user.role,
         isActive: user.is_active,
@@ -84,7 +83,7 @@ const AllUsers: React.FC = () => {
               users.map((user) => (
                 <tr key={user.id}>
                   <td>
-                    {user.firstName} {user.lastName}
+                    {user.full_name}
                   </td>
                   <td>{user.email}</td>
                   <td>

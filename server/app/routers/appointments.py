@@ -13,8 +13,7 @@ from app.models.user import User
 from app.models.doctor import Doctor
 from app.models.appointment import Appointment
 from app.models.availability import DoctorAvailability
-from app.schemas.appointment import AppointmentCreate
-from app.schemas.appointment import AppointmentResponse, AppointmentUpdate
+from app.schemas.appointment import AppointmentCreate, AppointmentResponse, AppointmentUpdate, AppointmentWithPatientResponse
 from app.services.notification import send_notification
 from app.services.video import create_video_room
 from app.dependencies import verify_doctor
@@ -34,7 +33,7 @@ async def book_appointment(
 
     now = datetime.now()
     current_date = now.date()
-    current_time = now.time()
+    current_time = now.time().replace(microsecond=0)
 
     # Check if the date is in the past
     if booking_data.appointment_date < current_date:
@@ -89,7 +88,7 @@ async def book_appointment(
         )
 
     # Check Time Range (Is 10:00 within 09:00 - 17:00?)
-    if not (availability.start_time <= booking_data.appointment_time < availability.end_time):
+    if not (availability.start_time <= clean_time < availability.end_time):
         raise HTTPException(
             status_code=400, 
             detail=f"Doctor is only available between {availability.start_time} and {availability.end_time}"
@@ -176,7 +175,7 @@ async def get_my_appointments(
     # AUTO-UPDATE PAST APPOINTMENTS
     now = datetime.now()
     today_date = now.date()
-    current_time = now.time()
+    current_time = now.time().replace(microsecond=0)
 
     await db.execute(
         update(Appointment)
@@ -219,7 +218,7 @@ async def get_my_appointments(
         return query.scalars().all()
 
 # Get All Unapproved Appointments for Doctor
-@router.get("/pendingAppointments", response_model=List[AppointmentResponse])
+@router.get("/pendingAppointments", response_model=List[AppointmentWithPatientResponse])
 async def get_my_pending_appointments(
     current_user: User = Depends(verify_doctor),
     db: AsyncSession = Depends(get_db)

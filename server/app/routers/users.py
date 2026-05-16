@@ -45,18 +45,26 @@ async def google_auth(request: GoogleTokenRequest, db: AsyncSession = Depends(ge
         if not user:
             # Generate a random 16-character dummy password
             alphabet = string.ascii_letters + string.digits
-            dummy_password = ''.join(secrets.choice(alphabet) for i in range(16))
+            dummy_password = ''.join(secrets.choice(alphabet) for _ in range(16))
             
-            user = UserCreate(
+            new_user = UserCreate(
                 email=email,
-                full_name=name,
+                full_name=name or email.split("@")[0],
                 password = dummy_password,
             )
-            await create_user(db=db, user=user)
+            user = await create_user(db=db, user=new_user)
 
         # Generate standard JWT token 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(data={"sub": user.email, "role": user.role}, expires_delta=access_token_expires)
+        access_token = create_access_token(
+            data={
+                "sub": user.email, 
+                "role": user.role, 
+                "id": str(user.id)
+            }, 
+            expires_delta=access_token_expires
+        )
+        
         return {"access_token": access_token, "token_type": "bearer"}
 
     except ValueError:

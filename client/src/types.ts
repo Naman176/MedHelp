@@ -1,7 +1,8 @@
 export interface UserInfo {
-  fullName?: string;
+  id?: string;
+  full_name?: string;
   email?: string;
-  profilePic?: string;
+  profile_picture?: string;
   role?: "user" | "doctor" | "admin";
 }
 
@@ -11,15 +12,31 @@ export interface AuthProps {
   handleLogout?: () => void;
 }
 
+export type AppointmentStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "REJECTED"
+  | "COMPLETED"
+  | "CANCELLED";
+
 export interface Appointment {
   id: string;
   doctor_id: string;
   patient_id: string;
   appointment_date: string;
   appointment_time: string;
-  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'PENDING'; // Using specific strings for better safety
+  status: AppointmentStatus;
   appointment_type: 'VIRTUAL' | 'IN_PERSON';
   meeting_link?: string;
+  patient?: {
+    id?: string;
+    email?: string;
+    full_name: string;
+  };
+  doctor?: {
+    id?: string;
+    specialization?: string;
+  };
 }
 
 export interface Doctor {
@@ -42,7 +59,7 @@ export interface DoctorRequest {
   experience: number;
   consultationFee: number;
   degreeUrl: string;
-  fullName: string;
+  full_name: string;
   email: string;
 }
 
@@ -52,8 +69,7 @@ export interface RejectPayload {
 
 export interface UserAdminView {
   id: string;
-  firstName: string;
-  lastName: string;
+  full_name: string;
   email: string;
   role: string;
   isActive: boolean;
@@ -69,13 +85,4 @@ export interface Notification {
   notification_type: "INFO" | "SUCCESS" | "WARNING" | "ERROR" | "REMINDER";
   is_read: boolean;
   created_at: string;
-}
-
-export interface Appointment {
-  id: string;
-  appointment_date: string;
-  appointment_time: string;
-  patient?: {
-    full_name: string;
-  };
 }

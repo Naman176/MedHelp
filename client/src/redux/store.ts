@@ -19,7 +19,7 @@ export const store = configureStore({
 store.subscribe(() => {
   localStorage.setItem(
     "notifications",
-    JSON.stringify(store.getState().notifications)
+    JSON.stringify(store.getState().notifications.notifications)
   );
 });
 

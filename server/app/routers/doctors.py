@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, HTTPException, status
 from app.services.notification import send_notification
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from datetime import time
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
@@ -148,13 +148,38 @@ async def set_availability(
             status_code=400,
             detail=f"Minimum availability block must be at least {min_working_minutes} minutes."
         )
+    
+    valid_days = {
+        "Monday", "Tuesday", "Wednesday", "Thursday",
+        "Friday", "Saturday", "Sunday"
+    }
+
+    normalized_days = []
+    for day in availability_data.days_of_week:
+        normalized_day = day.strip().capitalize()
+
+        if normalized_day not in valid_days:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid day value: {day}"
+            )
+
+        if normalized_day not in normalized_days:
+            normalized_days.append(normalized_day)
+
+    # Replace old availability instead of appending duplicates
+    await db.execute(
+        delete(DoctorAvailability).where(
+            DoctorAvailability.doctor_id == doctor.id
+        )
+    )
 
     # Create a row for EACH day in the list
     new_days = []
     for day in availability_data.days_of_week:
         slot = DoctorAvailability(
             doctor_id=doctor.id,
-            days_of_week=day.capitalize(), 
+            days_of_week=day, 
             start_time=availability_data.start_time,
             end_time=availability_data.end_time
         )
@@ -164,8 +189,10 @@ async def set_availability(
     await db.commit()
     
     return {
-        "message": f"Availability set for {len(new_days)} days",
-        "days": new_days
+        "message": "Availability set successfully",
+        "days": new_days,
+        "start_time": availability_data.start_time,
+        "end_time": availability_data.end_time,
     }
 
 # Get All Doctors
@@ -176,7 +203,11 @@ async def get_all_doctors(
     db: AsyncSession = Depends(get_db)
 ):
     offset = (page - 1) * limit
-    conditions = [User.is_verified == True, User.is_active == True]
+    conditions = [
+        User.is_verified.is_(True),
+        User.is_active.is_(True),
+        Doctor.is_available.is_(True),
+    ]
 
     # Fetch total count
     count_query = (
@@ -270,8 +301,16 @@ async def search_doctors(
     db: AsyncSession = Depends(get_db)
 ):
     # BASE QUERY: Join User model so we can check verification AND search by name
-    query = select(Doctor).join(Doctor.user).where(User.is_verified == True)
-    
+    query = (
+        select(Doctor)
+        .join(Doctor.user)
+        .where(
+            User.is_verified.is_(True),
+            User.is_active.is_(True),
+            Doctor.is_available.is_(True),
+        )
+    )
+
     # DYNAMIC FILTERS
     if name:
         # Searches the connected User table for the doctor's name

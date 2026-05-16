@@ -21,7 +21,7 @@ const ReviewDoctors: React.FC = () => {
         experience: doc.years_of_experience,
         consultationFee: doc.consultation_fee,
         degreeUrl: doc.degree_upload_url,
-        fullName: `${doc.user.full_name}`,
+        full_name: `${doc.user.full_name}`,
         email: doc.user.email,
       }));
 
@@ -96,7 +96,7 @@ const ReviewDoctors: React.FC = () => {
                 <tr key={doc.id}>
                   <td>
                     <div className="td-name">
-                      <span className="name">{doc.fullName}</span>
+                      <span className="name">{doc.full_name}</span>
                       <span className="email">{doc.email}</span>
                     </div>
                   </td>

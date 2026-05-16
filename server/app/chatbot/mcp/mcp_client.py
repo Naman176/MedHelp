@@ -17,9 +17,7 @@ If the MCP server is not running, booking_node falls back to direct tools.
 """
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
-
-# MCP server URL — must match host/port/path in mcp_server.py
-MCP_SERVER_URL = "http://127.0.0.1:8001/mcp"
+from app.core.config import settings
 
 # MCP server name — used as identifier in MultiServerMCPClient
 MCP_SERVER_NAME = "medhelp"
@@ -45,7 +43,7 @@ def get_mcp_client() -> MultiServerMCPClient:
         {
             MCP_SERVER_NAME: {
                 "transport": "streamable_http",
-                "url": MCP_SERVER_URL,
+                "url": settings.MCP_SERVER_URL,
             }
         }
     )

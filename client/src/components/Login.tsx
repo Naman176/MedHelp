@@ -77,9 +77,9 @@ const Login: React.FC = () => {
       const userDetails = await fetchData(`/user/me`);
       dispatch(
         setUserInfo({
-          fullName: userDetails.full_name,
+          full_name: userDetails.full_name,
           email: userDetails.email,
-          profilePic: userDetails.profile_picture,
+          profile_picture: userDetails.profile_picture,
           role: userDetails.role,
         }),
       );
@@ -138,8 +138,7 @@ const Login: React.FC = () => {
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => {
-                console.log("Google Login Failed");
-                toast.error("Google Login window closed or failed");
+                toast.error("Google Login failed");
               }}
               shape="rectangular"
               theme="outline"

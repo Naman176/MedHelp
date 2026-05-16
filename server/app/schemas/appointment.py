@@ -8,6 +8,7 @@ class AppointmentCreate(BaseModel):
     appointment_date: date  # Format: YYYY-MM-DD
     appointment_time: time
     appointment_type: Literal["IN_PERSON", "VIRTUAL"] = "IN_PERSON"
+
 # Schema for Updating Status (For Doctors/Admin)
 class AppointmentUpdate(BaseModel):
     status: Literal["PENDING", "CONFIRMED", "CANCELLED", "REJECTED", "COMPLETED"]
@@ -16,11 +17,15 @@ class AppointmentUpdate(BaseModel):
 class DoctorInfo(BaseModel):
     id: UUID
     specialization: str
-    # We might want to add 'name' here later if we join with User table
+
+    model_config = ConfigDict(from_attributes=True)
 
 class PatientInfo(BaseModel):
     id: UUID
     email: str
+    full_name: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 class AppointmentResponse(BaseModel):
     id: UUID
@@ -32,8 +37,9 @@ class AppointmentResponse(BaseModel):
     appointment_type: str
     meeting_link: Optional[str] = None
 
-    # Optional: We can add these later to show names
-    # doctor: DoctorInfo 
-    # patient: PatientInfo
+    model_config = ConfigDict(from_attributes=True)
+
+class AppointmentWithPatientResponse(AppointmentResponse):
+    patient: Optional[PatientInfo] = None
 
     model_config = ConfigDict(from_attributes=True)

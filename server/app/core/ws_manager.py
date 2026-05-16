@@ -19,7 +19,10 @@ class ConnectionManager:
         # Only send if the user is currently online
         websocket = self.active_connections.get(user_id)
         if websocket:
-            await websocket.send_json(message)
+            try:
+                await websocket.send_json(message)
+            except Exception:
+                self.disconnect(user_id)
 
 # Create a single global instance to use across app
 manager = ConnectionManager()

@@ -50,9 +50,15 @@ async def lifespan(app: FastAPI):
         await pool.close()
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION, lifespan=lifespan)
+
+allowed_origins = [
+    "http://localhost:5173",
+    settings.FRONTEND_URL,
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # frontend origin
+    allow_origins=list(set(allowed_origins)),  # frontend origin
     allow_credentials=True,
     allow_methods=["*"],  # allow POST, GET, OPTIONS, etc
     allow_headers=["*"],

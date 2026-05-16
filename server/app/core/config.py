@@ -15,12 +15,16 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str
     CLOUDINARY_API_SECRET: str
 
-    DAILY_API_KEY: str
-    GOOGLE_CLIENT_ID: str
+    DAILY_API_KEY: str = ""
+    GOOGLE_CLIENT_ID: str = ""
 
     GROQ_API_KEY: str
 
-    HF_TOKEN: str
+    HF_TOKEN: str = ""
+
+    FRONTEND_URL: str = "http://localhost:5173"
+    MCP_SERVER_URL: str = "http://127.0.0.1:8001/mcp"
+    USE_MCP: bool = True
 
     class Config:
         env_file = ".env"

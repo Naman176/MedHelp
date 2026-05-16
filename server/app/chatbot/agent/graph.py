@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated, Literal
 import asyncio
 from typing_extensions import TypedDict
@@ -38,14 +38,14 @@ router_llm = ChatGroq(
     model="llama-3.1-8b-instant",
     api_key=settings.GROQ_API_KEY,
     temperature=0,     # fully deterministic — same input = same output always
-    streaming=False,   # no streaming needed, we just need one word back
+    streaming=False,
 )
 
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     api_key=settings.GROQ_API_KEY,
     temperature=0.3,    # slight randomness for natural-sounding responses
-    streaming=False,     # enables token-by-token streaming to frontend
+    streaming=False,
 )
 
 tools = [get_available_doctors, list_specializations]
@@ -371,11 +371,22 @@ async def booking_node(state: MedHelpState) -> MedHelpState:
     specialist = state.get("recommended_specialist", "")
 
     today = datetime.now()
+    tomorrow = today + timedelta(days=1)
+    day_after_tomorrow = today + timedelta(days=2)
+
+    next_7_days = [
+        (today + timedelta(days=i)).strftime("%A")
+        for i in range(7)
+    ]
 
     date_context = (
         f"\n\nCurrent server date: {today.strftime('%Y-%m-%d')}."
         f"\nCurrent day of week: {today.strftime('%A')}."
-        "\nUse this when resolving words like tomorrow, today, day after tomorrow, weekend, and weekdays."
+        f"\nToday means: {today.strftime('%A')}."
+        f"\nTomorrow means: {tomorrow.strftime('%A')}."
+        f"\nDay after tomorrow means: {day_after_tomorrow.strftime('%A')}."
+        f"\nNext 7 days from today in order: {', '.join(next_7_days)}."
+        "\nUse these exact mappings when resolving relative date phrases."
     )
 
     # If we already know the specialist from a previous turn,
@@ -454,7 +465,6 @@ async def booking_node(state: MedHelpState) -> MedHelpState:
                 return {"messages": [response]}
     except Exception as e:
         # MCP server unavailable or error — fall through to direct tools
-        print(f"[MCP FALLBACK] reason: {e}")
         mcp_available = False
 
     # FALLBACK: DIRECT PYTHON TOOLS

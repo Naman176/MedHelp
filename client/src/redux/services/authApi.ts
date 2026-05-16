@@ -16,8 +16,9 @@ export const authApi = createApi({
       query: () => "/user/me",
       // This transforms the snake_case backend to camelCase frontend automatically
       transformResponse: (response: any) => ({
-        fullName: response.full_name,
-        profilePic: response.profile_picture,
+        id: response.id,
+        full_name: response.full_name,
+        profile_picture: response.profile_picture,
         role: response.role,
         email: response.email,
       }),

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-axios.defaults.baseURL = import.meta.env.VITE_SERVER_DOMAIN as string;
+axios.defaults.baseURL = (import.meta.env.VITE_SERVER_DOMAIN as string) || "http://localhost:8000";
 
 const fetchData = async (url: string): Promise<any> => {
   const { data } = await axios.get(url, {

@@ -23,6 +23,24 @@ const Doctors: React.FC = () => {
   const [nameQuery, setNameQuery] = useState("");
   const [specializationQuery, setSpecializationQuery] = useState("");
   const [searching, setSearching] = useState(false);
+
+  const mapDoctor = (doc: any): Doctor => ({
+        id: doc.id,
+        userId: doc.user_id,
+        specialization: doc.specialization,
+        licenseNumber: doc.license_number,
+        degreeUploadUrl: doc.degree_upload_url,
+        bio: doc.bio,
+        yearsOfExperience: doc.years_of_experience,
+        consultationFee: doc.consultation_fee,
+        isAvailable: doc.is_available,
+        user: {
+          id: doc.user.id,
+          full_name: doc.user.full_name,
+          email: doc.user.email,
+          profil_picture: doc.user.profile_picture || doc.user.profile_picture
+        } as UserInfo
+      });
   
   const searchDoctors = async () => {
     try {
@@ -37,23 +55,7 @@ const Doctors: React.FC = () => {
 
       const response = await fetchData(`/doctors/search?${params.toString()}`);
 
-      const mappedDoctors: Doctor[] = response.map((doc: any) => ({
-        id: doc.id,
-        userId: doc.user_id,
-        specialization: doc.specialization,
-        licenseNumber: doc.license_number,
-        degreeUploadUrl: doc.degree_upload_url,
-        bio: doc.bio,
-        yearsOfExperience: doc.years_of_experience,
-        consultationFee: doc.consultation_fee,
-        isAvailable: doc.is_available,
-        user: {
-          id: doc.user.id,
-          fullName: doc.user.full_name,
-          email: doc.user.email,
-          profilePic: doc.user.profile_pic || doc.user.profilePic
-        }
-      }));
+      const mappedDoctors: Doctor[] = response.map(mapDoctor);
 
       dispatch(setDoctors(mappedDoctors));
     } catch (error) {
@@ -71,23 +73,7 @@ const Doctors: React.FC = () => {
         `/doctors/?page=${pageToFetch}&limit=${LIMIT}`
       );
 
-      const mappedDoctors: Doctor[] = response.data.map((doc: any) => ({
-        id: doc.id,
-        userId: doc.user_id,
-        specialization: doc.specialization,
-        licenseNumber: doc.license_number,
-        degreeUploadUrl: doc.degree_upload_url,
-        bio: doc.bio,
-        yearsOfExperience: doc.years_of_experience,
-        consultationFee: doc.consultation_fee,
-        isAvailable: doc.is_available,
-        user: {
-          id: doc.user.id,
-          fullName: doc.user.full_name,
-          email: doc.user.email,
-          profilePic: doc.user.profile_pic || doc.user.profilePic
-        } as UserInfo
-      }));
+      const mappedDoctors: Doctor[] = response.data.map(mapDoctor);
 
       const updatedDoctors =
         pageToFetch === 1 ? mappedDoctors : [...doctors, ...mappedDoctors];
@@ -131,7 +117,7 @@ const Doctors: React.FC = () => {
           <div className="doc-info-main">
             <img
               src={
-                doctor.user.profilePic ||
+                doctor.user.profile_picture ||
                 "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
               }
               alt="Doctor"
@@ -139,7 +125,7 @@ const Doctors: React.FC = () => {
             />
 
             <div className="doc-details">
-              <h3>Dr. {doctor.user.fullName}</h3>
+              <h3>Dr. {doctor.user.full_name}</h3>
               <p className="specialization">{doctor.specialization}</p>
               <p className="experience">
                 {doctor.yearsOfExperience} Years Experience

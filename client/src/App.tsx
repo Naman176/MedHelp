@@ -1,5 +1,4 @@
 import React, { Suspense, useEffect } from "react";
-import _ from "lodash";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -28,13 +27,12 @@ import { PendingAppointments } from "./components/PendingAppointments";
 import { SetAvailability } from "./components/SetAvailability";
 
 const GOOGLE_CLIENT_ID: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-console.log('gci', GOOGLE_CLIENT_ID)
 const App: React.FC = () => {
   const dispatch = useDispatch();
   const userInfo = useSelector(getUserInfo) as UserInfo | null; 
   const token = localStorage.getItem("token")
   useNotifications(token);
-  const isLoggedIn: boolean =  token ? true : false;
+  const isLoggedIn: boolean =  Boolean(token && userInfo);
 
   const { data: userDetails, isLoading, isError } = useGetMeQuery(undefined, {
     skip: !token,
@@ -46,6 +44,9 @@ const App: React.FC = () => {
     }
     if (isError) {
       localStorage.removeItem("token");
+      localStorage.removeItem("medhelp_chat_thread_id");
+      localStorage.removeItem("medhelp_chat_messages");
+      localStorage.removeItem("notifications");
       dispatch(setUserInfo(null));
     }
   }, [userDetails, isError, dispatch]);
@@ -53,6 +54,9 @@ const App: React.FC = () => {
 
   const handleLogout = (): void => {
     localStorage.removeItem("token");
+    localStorage.removeItem("medhelp_chat_thread_id");
+    localStorage.removeItem("medhelp_chat_messages");
+    localStorage.removeItem("notifications");
     dispatch(setUserInfo(null));
     window.location.href = "/";
   };

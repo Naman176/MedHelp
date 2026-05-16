@@ -1,11 +1,15 @@
 import json
+import os
 from mcp.server.fastmcp import FastMCP
 from app.chatbot.services.doctor_service import ( list_available_specializations, search_available_doctors )
 
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8001"))
+
 mcp = FastMCP(
     "MedHelp MCP",
-    port=8001,
-    host="127.0.0.1",
+    port=PORT,
+    host=HOST,
 )
 
 

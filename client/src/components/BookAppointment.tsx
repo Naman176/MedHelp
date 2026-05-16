@@ -17,12 +17,13 @@ const BookAppointment: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     appointment_date: "",
     appointment_time: "",
-    appointment_type: "CONSULTATION",
+    appointment_type: "VIRTUAL",
   });
 
 useEffect(() => {
@@ -64,10 +65,10 @@ useEffect(() => {
   // 2. Helper: Find the rule for a specific chosen date
   const getRuleForDate = (dateString: string) => {
     if (!dateString) return null;
-    const date = new Date(dateString);
-    // Adjusting for timezone to get the correct day name
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
     const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date);
-    return schedule.find(s => s.days_of_week === dayName);
+    return schedule.find(s => s.days_of_week === dayName) || null;
   };
 
   const generateTimeSlots = (start: string, end: string) => {
@@ -98,31 +99,31 @@ useEffect(() => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-    setLoading(true);
+      setSubmitting(true);
 
-    await postData("/appointments/book", {
-      doctor_id: doctorId,
-      appointment_date: formData.appointment_date,
-      appointment_time: formData.appointment_time,
-      appointment_type: 'VIRTUAL',
-    });
+      await postData("/appointments/book", {
+        doctor_id: doctorId,
+        appointment_date: formData.appointment_date,
+        appointment_time: formData.appointment_time,
+        appointment_type: formData.appointment_type,
+      });
 
-    setSuccess(true);
-    setTimeout(() => navigate("/appointments"), 2000);
+      setSuccess(true);
+      setTimeout(() => navigate("/appointments"), 2000);
 
-  } catch (err: any) {
-    const detail = err.response?.data?.detail;
+    } catch (err: any) {
+        const detail = err.response?.data?.detail;
 
-    if (typeof detail === "string") {
-      setError(detail); // "This time slot is already booked."
-    } else if (Array.isArray(detail)) {
-      setError(detail[0].msg);
-    } else {
-      setError("Failed to book appointment");
-    }
-  } finally {
-    setLoading(false);
-  }
+        if (typeof detail === "string") {
+          setError(detail); // "This time slot is already booked."
+        } else if (Array.isArray(detail)) {
+          setError(detail[0].msg);
+        } else {
+          setError("Failed to book appointment");
+        }
+      } finally {
+        setSubmitting(false);
+      }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -149,14 +150,15 @@ useEffect(() => {
           <input 
             type="date"
             required
+            value={formData.appointment_date}
             min={new Date().toISOString().split("T")[0]} // Prevents past dates
             onChange={(e) => {
               const rule = getRuleForDate(e.target.value);
               if (!rule) {
                 alert("Doctor does not work on this day. Please pick another.");
-                setFormData({ ...formData, appointment_date: "" });
+                setFormData({ ...formData, appointment_date: "" , appointment_time: ""});
               } else {
-                setFormData({ ...formData, appointment_date: e.target.value });
+                setFormData({ ...formData, appointment_date: e.target.value, appointment_time: ""});
               }
             }}
           />
@@ -189,8 +191,8 @@ useEffect(() => {
           )}
         </div>
 
-        <button type="submit" className="btn-book" disabled={!formData.appointment_time}>
-          Request Booking
+        <button type="submit" className="btn-book" disabled={!formData.appointment_time || submitting}>
+          {submitting ? "Requesting..." : "Request Booking"}
         </button>
       </form>
     </div>

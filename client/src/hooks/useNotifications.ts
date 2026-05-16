@@ -1,35 +1,52 @@
 import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { addNotification, setNotifications } from "../redux/reducers/notificationsSlice";
-import type { RootState } from "../redux/store";
 import type { Notification } from "../types";
 import fetchData from "../helper/apiCall";
 import { setPendingAppointments } from "../redux/reducers/pendingAppointmentSlice";
 
-const API_URL = import.meta.env.VITE_SERVER_DOMAIN;
-const WS_URL = "ws://localhost:8000/notifications/ws";
+const API_URL = import.meta.env.VITE_SERVER_DOMAIN || "http://localhost:8000";
+const getWebSocketBaseUrl = (): string => {
+  return API_URL.replace(/^http/, "ws");
+};
+const WS_URL = `${getWebSocketBaseUrl()}/notifications/ws`;
 
 interface JwtPayload {
-  id: string;
+  id?: string;
   sub: string;
   role: string;
 }
 
 export const useNotifications = (token: string | null) => {
   const dispatch = useDispatch();
-  const { initialized } = useSelector((state: RootState) => state.notifications);
 
   useEffect(() => {
     if (!token) return;
-    const decoded = jwtDecode<JwtPayload>(token);
+    let decoded: JwtPayload;
+    try {
+      decoded = jwtDecode<JwtPayload>(token);
+    } catch {
+      console.error("Invalid JWT token; notifications disabled.");
+      return;
+    }
+
     const userId = decoded.id;
-    console.log(jwtDecode(token));
-    const storedItem = localStorage.getItem("notifications");
+    if (!userId) {
+      console.error("JWT does not contain user id; notifications disabled.");
+      return;
+    }
+
     let storedNotifications: Notification[] = [];
-    const parsed = storedItem ? JSON.parse(storedItem) : [];
-    storedNotifications = Array.isArray(parsed) ? parsed : [];
+    try {
+      const storedItem = localStorage.getItem("notifications");
+      const parsed = storedItem ? JSON.parse(storedItem) : [];
+      storedNotifications = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      storedNotifications = [];
+    }
+
     const init = async () => {
       try {
         const res = await axios.get<Notification[]>(`${API_URL}/notifications`, {
@@ -54,14 +71,30 @@ export const useNotifications = (token: string | null) => {
     const ws = new WebSocket(`${WS_URL}/${userId}`);
 
     ws.onmessage = async (event) => {
-       const notif: Notification = JSON.parse(event.data);
+       try {
+        const notif: Notification = JSON.parse(event.data);
+
         dispatch(addNotification(notif));
+
         if (notif.title === "New Booking Request") {
           const res = await fetchData("/appointments/pendingAppointments");
           dispatch(setPendingAppointments(res));
         }
-        const updated = [notif, ...JSON.parse(localStorage.getItem("notifications") || "[]")];
+
+        let current: Notification[] = [];
+
+        try {
+          const parsed = JSON.parse(localStorage.getItem("notifications") || "[]");
+          current = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          current = [];
+        }
+
+        const updated = [notif, ...current];
         localStorage.setItem("notifications", JSON.stringify(updated));
+      } catch (error) {
+        console.error("Failed to handle websocket notification", error);
+      }
     };
 
     ws.onerror = (err) => {
@@ -69,5 +102,5 @@ export const useNotifications = (token: string | null) => {
     };
 
     return () => ws.close();
-  }, [dispatch, token, initialized]);
+  }, [dispatch, token]);
 };

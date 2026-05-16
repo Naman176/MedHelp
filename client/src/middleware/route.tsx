@@ -1,6 +1,5 @@
 import { Navigate } from "react-router-dom";
 import type { ReactNode } from "react";
-import _ from "lodash";
 import { useSelector } from "react-redux";
 import { getUserInfo } from "../redux/selectors/rootSelectors";
 
@@ -36,7 +35,7 @@ export const DoctorOnly = ({children}: Props )=>{
 export const Public = ({ children }: Props) => {
   const userInfo = useSelector(getUserInfo);
 
-  if (!userInfo || _.isEmpty(userInfo)) {
+  if (!userInfo) {
     return <>{children}</>;
   }
 

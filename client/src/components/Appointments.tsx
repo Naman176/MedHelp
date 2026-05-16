@@ -37,15 +37,22 @@ const Appointments: React.FC = () => {
   }, []);
 
   const getStatusClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "scheduled": return "status-pending";
-      case "completed": return "status-success";
-      case "cancelled": return "status-error";
-      default: return "";
+    switch (status.toUpperCase()) {
+      case "PENDING":
+        return "status-pending";
+      case "CONFIRMED":
+        return "status-success";
+      case "COMPLETED":
+        return "status-success";
+      case "REJECTED":
+        return "status-error";
+      case "CANCELLED":
+        return "status-error";
+      default:
+        return "";
     }
   };
-
-  if (loading) return <div className="loader">Loading your schedule...</div>;
+  
   const renderMeetingCell = (apt: Appointment) => {
     if (apt.appointment_type === "VIRTUAL" && apt.meeting_link) {
       return (
@@ -62,6 +69,9 @@ const Appointments: React.FC = () => {
       return <span className="text-muted">N/A</span>;
     }
   };
+
+  if (loading) return <div className="loader">Loading your schedule...</div>;
+
   return (
     <div className="appointments-container">
       <div className="table-header">

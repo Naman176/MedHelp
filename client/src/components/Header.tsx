@@ -24,7 +24,7 @@ const Header: React.FC<AuthProps> = ({
               <div className="profile-avatar" title="Profile">
                 <img
                   src={
-                    userInfo?.profilePic ||
+                    userInfo?.profile_picture ||
                     "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
                   }
                   alt="Profile"

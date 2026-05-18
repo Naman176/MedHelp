@@ -27,9 +27,13 @@ async def lifespan(app: FastAPI):
         max_size=5,
         kwargs=connection_kwargs,
         open=False,
+        check=AsyncConnectionPool.check_connection,
+        max_lifetime=1800,
+        max_idle=300,
     )
 
     await pool.open()
+    await pool.wait()
 
     checkpointer = AsyncPostgresSaver(pool)
     await checkpointer.setup()

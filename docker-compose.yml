@@ -1,0 +1,30 @@
+services:
+  medhelp-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: medhelp-api
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: 8000
+      FRONTEND_URL: http://localhost:5173
+      MCP_SERVER_URL: http://medhelp-mcp:8001/mcp
+      USE_MCP: "true"
+    ports:
+      - "8000:8000"
+    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 8000"
+
+  medhelp-mcp:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: medhelp-mcp
+    env_file:
+      - ./server/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8001
+    ports:
+      - "8001:8001"
+    command: sh -c "python -m app.chatbot.mcp.mcp_server"

@@ -51,7 +51,12 @@ async def keep_db_alive(pool: AsyncConnectionPool):
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
-    future=True
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    pool_size=5,
+    max_overflow=10,
+    pool_timeout=30,
 )
 
 # 2. Create the Session Factory

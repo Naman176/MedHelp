@@ -1,0 +1,13 @@
+.env
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+chatbot_checkpoints.db
+node_modules
+.DS_Store
+app/chatbot/rag/.chroma
+ergerwe
